@@ -36,10 +36,7 @@ class GameTeamStat extends Model
 
     public function gameTeamPlayerStats(): BelongsToMany
     {
-        $hasMany = $this->belongsToMany(GameTeamPlayerStat::class, 'game_team_player_stats', 'game_id')
+        return $this->belongsToMany(GameTeamPlayerStat::class, 'game_team_player_stats', 'game_id')
             ->where('team_id', $this->team_id);
-
-        $sql = $hasMany->toRawSql();
-        return $hasMany;
     }
 }

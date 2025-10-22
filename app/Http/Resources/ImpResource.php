@@ -2,13 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Infrastructure\ImpCalculator\Dtos\ImpDto;
-use App\Infrastructure\ImpCalculator\Dtos\ImpPerDto;
+use App\Service\Imp\Dtos\ImpPerDto;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @property ImpDto $resource
+ * @property \App\Service\Imp\Dtos\ImpDto $resource
  */
 class ImpResource extends JsonResource
 {
@@ -20,11 +19,11 @@ class ImpResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'player_stat_id' => $this->resource->getPlayerStatId(),
+            'player_stat_id' => $this->resource->gameTeamPlayerStatId,
             'imp_pers'       => array_map(fn(ImpPerDto $impPerData) => [
-                'per' => $impPerData->getPer(),
-                'imp' => $impPerData->getImp(),
-            ], $this->resource->getImpPers()),
+                'per' => $impPerData->per,
+                'imp' => $impPerData->imp,
+            ], $this->resource->perDto),
         ];
     }
 }
