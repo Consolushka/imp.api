@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 /**
+ * @property int $duration
  * @property Collection<GameTeamStat> $gameTeamStats
 */
 class Game extends Model
