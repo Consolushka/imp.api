@@ -12,12 +12,9 @@ final class ImpCalculator
             return 0;
         }
 
-        // 9/37 = 0,1914893617
         $playerImpPerMinute = $plsMin / ($playedSeconds / 60);
-        // 1/48 = 0,02083333333
         $fullGameImpPerMinute = $finalDiff / $gamePlayedMinutes;
 
-        // 0,22240991
         return $playerImpPerMinute - $fullGameImpPerMinute;
     }
 

@@ -11,7 +11,7 @@ final class GameTeamPlayerStatsDto
         public ?int $plus_minus,
         public ?int $played_seconds,
         public ?int $final_differential,
-        public ?int $regulation_duration,
+        public ?int $duration,
     )
     {
     }
@@ -23,7 +23,7 @@ final class GameTeamPlayerStatsDto
             plus_minus: $data['plus_minus'] ?? null,
             played_seconds: $data['played_seconds'] ?? null,
             final_differential: $data['final_differential'] ?? null,
-            regulation_duration: $data['regulation_duration'] ?? null,
+            duration: $data['duration'] ?? null,
         );
     }
 }
