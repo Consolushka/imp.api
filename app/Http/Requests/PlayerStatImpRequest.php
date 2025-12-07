@@ -16,7 +16,8 @@ class PlayerStatImpRequest extends FormRequest
         return true;
     }
 
-    public function getIds()
+    /** @return array<int> */
+    public function getIds(): array
     {
         return $this->validated()['ids'];
     }
