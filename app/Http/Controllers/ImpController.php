@@ -39,14 +39,13 @@ final class ImpController extends Controller
                 'plus_minus',
                 'played_seconds',
                 'final_differential',
-                'regulation_duration'
+                'games.duration'
             )
             ->leftJoin('game_team_stats', function ($join) {
                 $join->on('game_team_stats.game_id', '=', 'game_team_player_stats.game_id')
                     ->on('game_team_stats.team_id', '=', 'game_team_player_stats.team_id');
             })
             ->leftJoin('games', 'games.id', '=', 'game_team_stats.game_id')
-            ->leftJoin('tournaments', 'tournaments.id', '=', 'games.tournament_id')
             ->whereIn('game_team_player_stats.id', $ids)
             ->get()
             ->toArray();
