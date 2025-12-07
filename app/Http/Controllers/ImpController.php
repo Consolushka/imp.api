@@ -56,7 +56,7 @@ final class ImpController extends Controller
             /**@var GameTeamPlayerStatsDto $stat */
             $impPers = [];
             foreach ($pers as $per) {
-                $impPers[$per] = new ImpPerDto(ImpCalculator::evaluatePer($stat->played_seconds, $stat->plus_minus, $stat->final_differential, $stat->regulation_duration, PersEnum::from($per)));
+                $impPers[$per] = new ImpPerDto(ImpCalculator::evaluatePer($stat->played_seconds, $stat->plus_minus, $stat->final_differential, $stat->duration, PersEnum::from($per)));
             }
             $imps[intval($stat->id)] = $impPers;
         }
