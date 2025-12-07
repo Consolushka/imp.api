@@ -6,7 +6,7 @@ namespace App\Service\Imp\Dtos;
 
 final readonly class ImpDto
 {
-    public function __construct(public int $gameTeamPlayerStatId, public array $perDto)
+    public function __construct(public array $perDto)
     {
 
     }
