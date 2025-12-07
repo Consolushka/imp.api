@@ -17,8 +17,22 @@ final class ImpController extends Controller
 {
     public function index(PlayerStatImpRequest $request)
     {
-        $imps = [];
         $ids = $request->getIds();
+        $imps = $this->calcImpForStatIds($ids, $request->pers);
+
+        return [
+            'data' => $imps,
+        ];
+    }
+
+    /**
+     * @param mixed $ids
+     * @param array $pers
+     * @return array<int, ImpDto>
+     */
+    public function calcImpForStatIds(array $ids, array $pers): array
+    {
+        $imps = [];
         $records = DB::table('game_team_player_stats')
             ->select(
                 'game_team_player_stats.id',
@@ -41,14 +55,11 @@ final class ImpController extends Controller
         foreach ($stats as $stat) {
             /**@var GameTeamPlayerStatsDto $stat */
             $impPers = [];
-            foreach ($request->pers as $per) {
-                $impPers[] = new ImpPerDto(PersEnum::from($per), ImpCalculator::evaluatePer($stat->played_seconds, $stat->plus_minus, $stat->final_differential, $stat->duration, PersEnum::from($per)));
+            foreach ($pers as $per) {
+                $impPers[$per] = new ImpPerDto(ImpCalculator::evaluatePer($stat->played_seconds, $stat->plus_minus, $stat->final_differential, $stat->regulation_duration, PersEnum::from($per)));
             }
-            $imps[] = new ImpDto($stat->id, $impPers);
+            $imps[intval($stat->id)] = $impPers;
         }
-
-        return [
-            'data' => ImpResource::collection($imps),
-        ];
+        return $imps;
     }
 }
