@@ -45,6 +45,16 @@ class ImpRankingRequest extends FormRequest
         return $this->validated()['team_id'] ?? null;
     }
 
+    public function getMinMinutes(): ?int
+    {
+        return $this->validated()['min_minutes'] ?? null;
+    }
+
+    public function getMaxMinutes(): ?int
+    {
+        return $this->validated()['max_minutes'] ?? null;
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -54,11 +64,13 @@ class ImpRankingRequest extends FormRequest
     {
         return [
             'tournament_id' => 'required|exists:tournaments,id',
-            'per'        => 'required|in:' . implode(',', PersEnum::stringCases()),
+            'per'           => 'required|in:' . implode(',', PersEnum::stringCases()),
             'limit'         => 'integer|min:1|max:100',
             'order'         => 'in:asc,desc',
             'min_games'     => 'integer|min:1',
             'team_id'       => 'exists:teams,id',
+            'min_minutes'   => 'integer|min:1',
+            'max_minutes'   => 'integer|min:1',
         ];
     }
 }

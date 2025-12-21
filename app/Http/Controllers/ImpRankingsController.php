@@ -19,7 +19,13 @@ class ImpRankingsController
         $playerStatIds = GameTeamPlayerStat::query()
             ->whereIn('game_id', $gameIds);
         if ($request->getTeamId()) {
-            $playerStatIds = $playerStatIds->where('team_id', $request->getTeamId());
+            $playerStatIds->where('team_id', $request->getTeamId());
+        }
+        if ($request->getMinMinutes()) {
+            $playerStatIds->where('played_seconds', '>=', $request->getMinMinutes() * 60);
+        }
+        if ($request->getMaxMinutes()) {
+            $playerStatIds->where('played_seconds', '<=', $request->getMaxMinutes() * 60);
         }
         $playerStatIds = $playerStatIds->get(['player_id', 'id'])
             ->groupBy('id')->toArray();
