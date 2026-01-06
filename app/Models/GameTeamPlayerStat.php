@@ -13,6 +13,12 @@ use Carbon\Carbon;
  * @property int $player_id
  * @property int $played_seconds
  * @property int $plus_minus
+ * @property int points
+ * @property int $rebounds
+ * @property int $assists
+ * @property int $steals
+ * @property int $blocks
+ * @property int $turnovers
  * @property Carbon $created_at
  * @property Carbon $updated_at
 */
@@ -26,11 +32,23 @@ class GameTeamPlayerStat extends Model
         'player_id',
         'played_seconds',
         'plus_minus',
+        'points',
+        'rebounds',
+        'assists',
+        'steals',
+        'blocks',
+        'turnovers',
     ];
 
     protected $casts = [
         'played_seconds' => 'integer',
         'plus_minus' => 'integer',
+        'points' => 'integer',
+        'rebounds' => 'integer',
+        'assists' => 'integer',
+        'steals' => 'integer',
+        'blocks' => 'integer',
+        'turnovers' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
