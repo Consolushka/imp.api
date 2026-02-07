@@ -6,6 +6,7 @@ use App\Http\Controllers\ImpController;
 use App\Http\Controllers\ImpRankingsController;
 use App\Http\Controllers\LeaguesController;
 use App\Http\Controllers\LeagueTournamentsController;
+use App\Http\Controllers\PlayersRecentImpController;
 use App\Http\Controllers\TournamentGamesController;
 use App\Http\Controllers\TournamentsController;
 use App\Http\Controllers\TournamentTeamsController;
@@ -39,6 +40,8 @@ Route::resource('games.stats', GameStatsController::class)->only([
     'index'
 ]);
 
+Route::post('players/imp/recent', [PlayersRecentImpController::class, 'index']);
+
 Route::resource('imp', ImpController::class)->only([
     'index'
 ]);
@@ -46,4 +49,3 @@ Route::resource('imp', ImpController::class)->only([
 Route::resource('leaderboard', ImpRankingsController::class)->only([
     'index'
 ]);
-
