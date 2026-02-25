@@ -64,7 +64,8 @@ class PlayersRecentImpController extends Controller
                         (int) $row->plus_minus,
                         (int) $row->final_differential,
                         $duration,
-                        $per
+                        $per,
+                        $request->useReliability()
                     );
                 }
 

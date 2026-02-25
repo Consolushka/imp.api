@@ -22,6 +22,11 @@ class PlayerStatImpRequest extends FormRequest
         return $this->validated()['ids'];
     }
 
+    public function useReliability(): bool
+    {
+        return (bool) ($this->validated()['use_reliability'] ?? true);
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -30,10 +35,11 @@ class PlayerStatImpRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ids'    => 'required|array',
-            'ids.*'  => 'exists:game_team_player_stats,id',
-            'pers'   => 'required|array',
-            'pers.*' => 'in:' . implode(',', PersEnum::stringCases()),
+            'ids'             => 'required|array',
+            'ids.*'           => 'exists:game_team_player_stats,id',
+            'pers'            => 'required|array',
+            'pers.*'          => 'in:' . implode(',', PersEnum::stringCases()),
+            'use_reliability' => 'boolean',
         ];
     }
 }

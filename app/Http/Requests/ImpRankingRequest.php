@@ -55,6 +55,11 @@ class ImpRankingRequest extends FormRequest
         return $this->validated()['max_minutes'] ?? null;
     }
 
+    public function useReliability(): bool
+    {
+        return (bool) ($this->validated()['use_reliability'] ?? true);
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -63,14 +68,15 @@ class ImpRankingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tournament_id' => 'required|exists:tournaments,id',
-            'per'           => 'required|in:' . implode(',', PersEnum::stringCases()),
-            'limit'         => 'integer|min:1|max:100',
-            'order'         => 'in:asc,desc',
-            'min_games'     => 'integer|min:1',
-            'team_id'       => 'exists:teams,id',
-            'min_minutes'   => 'integer|min:1',
-            'max_minutes'   => 'integer|min:1',
+            'tournament_id'   => 'required|exists:tournaments,id',
+            'per'             => 'required|in:' . implode(',', PersEnum::stringCases()),
+            'limit'           => 'integer|min:1|max:100',
+            'order'           => 'in:asc,desc',
+            'min_games'       => 'integer|min:1',
+            'team_id'         => 'exists:teams,id',
+            'min_minutes'     => 'integer|min:1',
+            'max_minutes'     => 'integer|min:1',
+            'use_reliability' => 'boolean',
         ];
     }
 }

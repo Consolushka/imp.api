@@ -18,15 +18,20 @@ final class ImpCalculator
         return $playerImpPerMinute - $fullGameImpPerMinute;
     }
 
-    public static function evaluatePer(int $playedSeconds, int $plsMin, int $finalDiff, int $gamePlayedMinutes, PersEnum $per): float
+    public static function evaluatePer(int $playedSeconds, int $plsMin, int $finalDiff, int $gamePlayedMinutes, PersEnum $per, bool $useReliability = true): float
     {
         $cleanImp = self::evaluateClean($playedSeconds, $plsMin, $finalDiff, $gamePlayedMinutes);
 
-        $timeBase = TimeBasesEnum::fromGameDurationAndPer($gamePlayedMinutes, $per);;
+        $timeBase = TimeBasesEnum::fromGameDurationAndPer($gamePlayedMinutes, $per);
 
-        $reliability = $timeBase->calculateReliability($playedSeconds / 60);;
-        $pure = $cleanImp * $timeBase->value * $reliability;;
+        $value = $cleanImp * $timeBase->value;
 
-        return $pure * $reliability;
+        if (!$useReliability) {
+            return $value;
+        }
+
+        $reliability = $timeBase->calculateReliability($playedSeconds / 60);
+
+        return $value * $reliability * $reliability;
     }
 }

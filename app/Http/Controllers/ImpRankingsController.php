@@ -33,7 +33,7 @@ class ImpRankingsController
         $playerImpsByPlayerId = [];
 
         // todo: оптимизировать что бы сразу брать всю стату
-        $imps = (new ImpController())->calcImpForStatIds(array_keys($playerStatIds), [$request->getPer()]);
+        $imps = (new ImpController())->calcImpForStatIds(array_keys($playerStatIds), [$request->getPer()], $request->useReliability());
 
         foreach ($playerStatIds as $playerId => $playerStat) {
             $playerImpsByPlayerId[$playerStat[0]['player_id']][] = $imps[$playerId][$request->getPer()]->imp;
