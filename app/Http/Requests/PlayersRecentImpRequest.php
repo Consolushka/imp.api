@@ -44,19 +44,25 @@ class PlayersRecentImpRequest extends FormRequest
         return $this->validated()['limit'] ?? 15;
     }
 
+    public function useReliability(): bool
+    {
+        return (bool) ($this->validated()['use_reliability'] ?? true);
+    }
+
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'player_ids' => 'required|array',
-            'player_ids.*' => 'exists:players,id',
-            'tournament_id' => 'required|exists:tournaments,id',
-            'team_id' => 'exists:teams,id',
-            'per' => 'required|in:' . implode(',', PersEnum::stringCases()),
-            'offset' => 'integer|min:0',
-            'limit' => 'integer|min:1|max:100',
+            'player_ids'      => 'required|array',
+            'player_ids.*'    => 'exists:players,id',
+            'tournament_id'   => 'required|exists:tournaments,id',
+            'team_id'         => 'exists:teams,id',
+            'per'             => 'required|in:' . implode(',', PersEnum::stringCases()),
+            'offset'          => 'integer|min:0',
+            'limit'           => 'integer|min:1|max:100',
+            'use_reliability' => 'boolean',
         ];
     }
 }
