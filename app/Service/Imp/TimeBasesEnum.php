@@ -41,7 +41,7 @@ enum TimeBasesEnum: int
             }
         }
 
-        throw new \Exception('To be implemented');
+        throw new \InvalidArgumentException("Game duration {$gameDuration} is not supported for IMP calculation. Only 40 and 48 minutes are currently handled.");
     }
 
     public function calculateReliability(float $minutesPlayed): float

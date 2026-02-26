@@ -32,8 +32,14 @@ class ImpRankingsController
 
         $playerImpsByPlayerId = [];
 
-        // todo: оптимизировать что бы сразу брать всю стату
-        $imps = (new ImpController())->calcImpForStatIds(array_keys($playerStatIds), [$request->getPer()], $request->useReliability());
+        try {
+            // todo: оптимизировать что бы сразу брать всю стату
+            $imps = (new ImpController())->calcImpForStatIds(array_keys($playerStatIds), [$request->getPer()], $request->useReliability());
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'An error occurred during IMP calculation: ' . $e->getMessage()], 400);
+        }
 
         foreach ($playerStatIds as $playerId => $playerStat) {
             $playerImpsByPlayerId[$playerStat[0]['player_id']][] = $imps[$playerId][$request->getPer()]->imp;
