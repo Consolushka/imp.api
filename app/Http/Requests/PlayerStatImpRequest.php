@@ -28,6 +28,18 @@ class PlayerStatImpRequest extends FormRequest
     }
 
     /**
+     * Handle boolean string values from GET request.
+     */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('use_reliability')) {
+            $this->merge([
+                'use_reliability' => filter_var($this->use_reliability, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
+            ]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array<mixed>|string>
