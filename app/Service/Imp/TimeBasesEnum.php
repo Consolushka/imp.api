@@ -15,7 +15,10 @@ enum TimeBasesEnum: int
 
     public static function fromGameDurationAndPer(int $gameDuration, PersEnum $persEnum): self
     {
-        if ($gameDuration === 40) {
+        $is40Base = $gameDuration >= 40 && ($gameDuration - 40) % 5 === 0;
+        $is48Base = $gameDuration >= 48 && ($gameDuration - 48) % 5 === 0;
+
+        if ($is40Base) {
             switch ($persEnum) {
                 case PersEnum::Clean:
                     throw new \Exception('To be implemented');
@@ -28,7 +31,7 @@ enum TimeBasesEnum: int
             }
         }
 
-        if ($gameDuration === 48) {
+        if ($is48Base) {
             switch ($persEnum) {
                 case PersEnum::Clean:
                     throw new \Exception('To be implemented');
@@ -41,7 +44,7 @@ enum TimeBasesEnum: int
             }
         }
 
-        throw new \InvalidArgumentException("Game duration {$gameDuration} is not supported for IMP calculation. Only 40 and 48 minutes are currently handled.");
+        throw new \InvalidArgumentException("Game duration {$gameDuration} is not supported for IMP calculation. Only 40 and 48 minutes bases (including overtimes) are currently handled.");
     }
 
     public function calculateReliability(float $minutesPlayed): float
