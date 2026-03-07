@@ -11,6 +11,7 @@ use Carbon\Carbon;
  * @property int $id
  * @property string $name
  * @property string $alias
+ * @property int $order
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property Tournament[] $tournaments
@@ -22,9 +23,11 @@ class League extends Model
     protected $fillable = [
         'name',
         'alias',
+        'order',
     ];
 
     protected $casts = [
+        'order' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

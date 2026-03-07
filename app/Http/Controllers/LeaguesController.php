@@ -13,7 +13,7 @@ class LeaguesController extends Controller
     public function index()
     {
         return [
-            'data' => League::all()
+            'data' => League::orderBy('order')->get()
         ];
     }
 }
