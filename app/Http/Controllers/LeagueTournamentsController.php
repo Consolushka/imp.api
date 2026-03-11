@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TournamentResource;
 use App\Models\League;
+use App\Models\Tournament;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 
 class LeagueTournamentsController extends Controller
@@ -10,20 +13,16 @@ class LeagueTournamentsController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(int $leagueId)
+    public function index(League $league): AnonymousResourceCollection
     {
-        return [
-            'data' => League::find($leagueId)->tournaments
-        ];
+        return TournamentResource::collection($league->tournaments);
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(int $leagueId, int $tournamentId)
+    public function show(League $league, Tournament $tournament): TournamentResource
     {
-        return [
-            'data' => League::find($leagueId)->tournaments()->find($tournamentId)
-        ];
+        return new TournamentResource($tournament);
     }
 }
