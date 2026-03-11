@@ -21,7 +21,7 @@ Route::resource('leagues.tournaments', LeagueTournamentsController::class)->only
 ]);
 
 Route::resource('tournaments', TournamentsController::class)->only([
-    'index'
+    'index', 'show'
 ]);
 
 Route::resource('tournaments.games', TournamentGamesController::class)->only([
