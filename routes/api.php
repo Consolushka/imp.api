@@ -46,6 +46,9 @@ Route::resource('imp', ImpController::class)->only([
     'index'
 ]);
 
+Route::post('imp/calculate-raw', [ImpController::class, 'calculateRaw'])
+    ->middleware('static.token');
+
 Route::resource('leaderboard', ImpRankingsController::class)->only([
     'index'
 ]);

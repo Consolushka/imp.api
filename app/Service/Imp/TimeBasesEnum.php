@@ -47,82 +47,27 @@ enum TimeBasesEnum: int
         throw new \InvalidArgumentException("Game duration {$gameDuration} is not supported for IMP calculation. Only 40 and 48 minutes bases (including overtimes) are currently handled.");
     }
 
-    public function calculateReliability(float $minutesPlayed): float
+    public function calculateReliability(float $minutesPlayed, int $precision = 2): float
     {
-        $lowerEdgeCoefficient = 0.3947;
-
-        $lowerEdge = $lowerEdgeCoefficient * $this->value;
-
-        if ($minutesPlayed < $lowerEdge) {
-            return $this->insufficientDistanceCoefficient() * pow($minutesPlayed, $this->insufficientDistancePower());
+        if ($minutesPlayed <= 0) {
+            return 0.0;
         }
 
-        if ($minutesPlayed < $this->value) {
-            return $this->sufficientDistanceOffset() + (pow($minutesPlayed - $lowerEdge, $this->sufficientDistancePower())) / (pow($this->value - $lowerEdge, $this->sufficientDistancePower())) * (1 - $this->sufficientDistanceOffset());
-        }
+        $k = $this->isNBA() ? 18 : 15;
 
-        return 1 - (pow($minutesPlayed - $this->value, $this->overSufficientDistanceUpperPower())) / (pow($this->value - $lowerEdge, $this->overSufficientDistanceLowerPower()));
+        $xSquared = pow($minutesPlayed, 2);
+        $kSquared = pow($k, 2);
+
+        $reliability = $xSquared / ($xSquared + $kSquared);
+
+        return round($reliability, $precision);
     }
 
-    private function insufficientDistanceCoefficient(): float
+    private function isNBA(): bool
     {
         return match ($this) {
-            self::Per20 => 0.05,
-            self::Per24 => 0.0003,
-            self::Per30 => 0.00024,
-            self::Per36 => 0.00012,
-            self::Per40 => 0.00008,
-            self::Per48 => 0.000034,
-        };
-    }
-
-    private function insufficientDistancePower(): float
-    {
-        return match ($this) {
-            self::Per20 => 1.0,
-            self::Per24 => 2.8,
-            self::Per30, self::Per36, self::Per40 => 3.0,
-            self::Per48 => 3.2,
-        };
-    }
-
-    private function sufficientDistanceOffset(): float
-    {
-        return match ($this) {
-            self::Per20 => 0.4,
-            self::Per24 => 0.189,
-            self::Per30 => 0.252,
-            self::Per36 => 0.405,
-            self::Per40 => 0.327,
-            self::Per48 => 0.42,
-        };
-    }
-
-    private function sufficientDistancePower(): float
-    {
-        return match ($this) {
-            self::Per20, self::Per24, self::Per30, self::Per36 => 0.6,
-            self::Per40 => 0.8,
-            self::Per48 => 0.4,
-        };
-    }
-
-    private function overSufficientDistanceUpperPower(): float
-    {
-        return match ($this) {
-            self::Per20, self::Per24, self::Per30, self::Per36, self::Per40, self::Per48 => 2.0,
-        };
-    }
-
-    private function overSufficientDistanceLowerPower(): float
-    {
-        return match ($this) {
-            self::Per20 => 3.1,
-            self::Per24 => 2.8,
-            self::Per30 => 2.3,
-            self::Per36 => 2.2,
-            self::Per40 => 2.0,
-            self::Per48 => 1.9,
+            self::Per24, self::Per36, self::Per48 => true,
+            self::Per20, self::Per30, self::Per40 => false,
         };
     }
 }

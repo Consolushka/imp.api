@@ -1,66 +1,96 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# IMP Dashboard
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A high-performance Laravel-based dashboard for calculating and visualizing **International Match Points (IMP)** statistics, primarily designed for professional basketball leagues (FIBA & NBA).
 
-## About Laravel
+## 🚀 Key Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Dynamic IMP Calculation:** Real-time calculation of player efficiency based on plus/minus, game duration, and final scores.
+- **Reliability Scoring:** Advanced quadratic formula for evaluating statistical confidence based on playing time.
+- **Multi-League Support:** Built-in logic for both 40-minute (FIBA) and 48-minute (NBA) match formats.
+- **RESTful API:** Protected endpoints for batch processing and raw data calculations.
+- **Dockerized Environment:** One-command setup for development and production.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🏗️ Architecture
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+The project follows a modern, service-oriented architecture:
 
-## Learning Laravel
+- **Services (`app/Service`):** Core business logic, including the `ImpCalculator` engine.
+- **DTOs (`app/Dtos`):** Strict data transfer objects for predictable data flow.
+- **Enums (`app/Service/Imp`):** Strong typing for persistence modes (`PersEnum`) and time bases (`TimeBasesEnum`).
+- **Middleware:** Token-based security for internal API access.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 🛠️ Tech Stack
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **Framework:** Laravel 12 (PHP 8.2+)
+- **Database:** PostgreSQL (with external `imp` network integration)
+- **Containerization:** Docker & Docker Compose
+- **API Documentation:** Dedoc Scramble (OpenAPI)
+- **Frontend:** Vite + React (planned/in progress)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🔧 Installation & Setup
 
-## Laravel Sponsors
+### Prerequisites
+- Docker & Docker Compose
+- Make (optional, but recommended)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Getting Started
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/your-repo/imp-dashboard.git
+   cd imp-dashboard
+   ```
 
-### Premium Partners
+2. **Setup environment:**
+   ```bash
+   cp .env.example .env
+   # Set your IMP_API_TOKEN and other variables
+   ```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+3. **Spin up the environment:**
+   ```bash
+   make up
+   ```
 
-## Contributing
+4. **Install dependencies:**
+   ```bash
+   make install
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 📖 Development Commands
 
-## Code of Conduct
+| Command | Description |
+|---------|-------------|
+| `make up` | Start Docker containers in background |
+| `make stop` | Stop all running containers |
+| `make sh` | Access the app container shell |
+| `make install` | Run composer install and generate app key |
+| `php artisan test` | Run the test suite |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 📊 IMP Logic & Reliability
 
-## Security Vulnerabilities
+The **Reliability Score** uses a quadratic formula to penalize low playing time:
+$$R = \frac{x^2}{x^2 + k^2}$$
+- **FIBA (40 min):** $k = 15$
+- **NBA (48 min):** $k = 18$
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+This ensures that "noise" from players with very low minutes is minimized in the overall rankings.
 
-## License
+## 🔐 API Documentation
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+The dashboard exposes several key endpoints:
+- `POST /api/imp/calculate-raw` — Calculate IMP from arbitrary data (protected by `X-IMP-TOKEN`).
+- `GET /api/imp` — Batch calculate IMP for stored statistics.
+- `GET /api/leaderboard` — View player rankings.
+
+Full documentation is available at `/docs/api` (powered by Scramble).
+
+## 🧪 Testing
+
+We prioritize reliability. Run the tests via:
+```bash
+docker exec -i app php artisan test
+```
+The suite includes unit tests for the core calculator and feature tests for the API layer.
+
+---
+Developed for high-performance sports analytics.

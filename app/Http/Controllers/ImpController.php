@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Dtos\GameTeamPlayerStatsDto;
+use App\Http\Requests\ImpCalculateRawRequest;
 use App\Http\Requests\PlayerStatImpRequest;
 use App\Http\Resources\ImpResource;
 use App\Models\GameTeamPlayerStat;
@@ -22,6 +23,28 @@ final class ImpController extends Controller
 
         return [
             'data' => $imps,
+        ];
+    }
+
+    public function calculateRaw(ImpCalculateRawRequest $request)
+    {
+        $pers = $request->getPers();
+        $useReliability = $request->useReliability();
+
+        $result = [];
+        foreach ($pers as $per) {
+            $result[$per] = new ImpPerDto(ImpCalculator::evaluatePer(
+                $request->getPlayedSeconds(),
+                $request->getPlusMinus(),
+                $request->getFinalDifferential(),
+                $request->getDuration(),
+                PersEnum::from($per),
+                $useReliability
+            ));
+        }
+
+        return [
+            'data' => $result,
         ];
     }
 
