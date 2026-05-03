@@ -37,4 +37,9 @@ class League extends Model
     {
         return $this->hasMany(Tournament::class);
     }
+
+    public function games(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(Game::class, Tournament::class);
+    }
 }
