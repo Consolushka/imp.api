@@ -65,6 +65,7 @@ final class ImpController extends Controller
                 'final_differential',
                 'games.duration'
             )
+            ->where('game_team_player_stats.played_seconds', '>', 0)
             ->leftJoin('game_team_stats', function ($join) {
                 $join->on('game_team_stats.game_id', '=', 'game_team_player_stats.game_id')
                     ->on('game_team_stats.team_id', '=', 'game_team_player_stats.team_id');
@@ -81,10 +82,10 @@ final class ImpController extends Controller
             $impPers = [];
             foreach ($pers as $per) {
                 $impPers[$per] = new ImpPerDto(ImpCalculator::evaluatePer(
-                    $stat->played_seconds,
-                    $stat->plus_minus,
-                    $stat->final_differential,
-                    $stat->duration,
+                    (int)$stat->played_seconds,
+                    (int)$stat->plus_minus,
+                    (int)$stat->final_differential,
+                    (int)$stat->duration,
                     PersEnum::from($per),
                     $useReliability
                 ));

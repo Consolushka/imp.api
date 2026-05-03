@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('summary', [SummaryController::class, 'index']);
 
+Route::get('leagues/summary', [LeaguesController::class, 'summary']);
 Route::resource('leagues', LeaguesController::class)->only([
     'index'
 ]);
@@ -23,6 +24,7 @@ Route::resource('leagues.tournaments', LeagueTournamentsController::class)->only
     'index', 'show'
 ]);
 
+Route::get('tournaments/summary', [TournamentsController::class, 'summary']);
 Route::resource('tournaments', TournamentsController::class)->only([
     'index', 'show'
 ]);
