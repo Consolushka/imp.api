@@ -16,6 +16,7 @@ class TournamentResource extends JsonResource
             'id' => $this->id,
             'league_id' => $this->league_id,
             'name' => $this->name,
+            'tier' => $this->tier,
             'start_at' => $this->start_at?->toIso8601String(),
             'end_at' => $this->end_at?->toIso8601String(),
             'regulation_duration' => $this->regulation_duration,
