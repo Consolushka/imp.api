@@ -9,7 +9,7 @@ use App\Models\Player;
 
 readonly final class RankedPlayerDto
 {
-    public function __construct(private int $leaderboardPosition, private int $playerId, private Player $player, private int $games, private float $avgImp)
+    public function __construct(private int $leaderboardPosition, private int $playerId, private Player $player, private string $teamAlias, private int $games, private float $avgImp)
     {
     }
 
@@ -26,6 +26,11 @@ readonly final class RankedPlayerDto
     public function getPlayer(): Player
     {
         return $this->player;
+    }
+
+    public function getTeamAlias(): string
+    {
+        return $this->teamAlias;
     }
 
     public function getGames(): int
