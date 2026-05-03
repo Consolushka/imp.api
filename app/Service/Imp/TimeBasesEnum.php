@@ -53,12 +53,23 @@ enum TimeBasesEnum: int
             return 0.0;
         }
 
-        $k = $this->isNBA() ? 18 : 15;
+        // "Золотой стандарт" - пик достоверности (100%)
+        $tPeak = $this->isNBA() ? 36.0 : 30.0;
 
-        $xSquared = pow($minutesPlayed, 2);
-        $kSquared = pow($k, 2);
+        // Фаза 1: Возрастание до золотого стандарта (Smoothstep)
+        if ($minutesPlayed <= $tPeak) {
+            $t = $minutesPlayed / $tPeak;
+            $reliability = $t * $t * (3 - 2 * $t);
+        }
+        // Фаза 2: Экспоненциальное затухание (Long Tail) после пика
+        else {
+            // Коэффициент затухания (лямбда).
+            // При 0.005 на 48-й минуте (в NBA) достоверность будет ~0.94
+            // При 0.01 на 48-й минуте она упадет сильнее, до ~0.88
+            $decayRate = 0.005;
 
-        $reliability = $xSquared / ($xSquared + $kSquared);
+            $reliability = exp(-$decayRate * ($minutesPlayed - $tPeak));
+        }
 
         return round($reliability, $precision);
     }
