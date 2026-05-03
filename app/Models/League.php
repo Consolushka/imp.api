@@ -12,6 +12,7 @@ use Carbon\Carbon;
  * @property string $name
  * @property string $alias
  * @property int $order
+ * @property int $tier
  * @property Carbon $created_at
  * @property Carbon $updated_at
  * @property Tournament[] $tournaments
