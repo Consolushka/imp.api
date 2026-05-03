@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Dtos\PlayerOfTheDayDto;
+use App\Http\Resources\PlayerOfTheDayResource;
 use App\Http\Resources\TournamentResource;
 use App\Http\Resources\TournamentSummaryResource;
+use App\Models\Game;
 use App\Models\GameTeamPlayerStat;
 use App\Models\GameTeamStat;
 use App\Models\Player;
 use App\Models\Tournament;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 
@@ -19,6 +23,59 @@ class TournamentsController extends Controller
     public function index(): AnonymousResourceCollection
     {
         return TournamentResource::collection(Tournament::all());
+    }
+
+    public function playersOfTheDay(Request $request, int $id)
+    {
+        $latestGame = Game::where('tournament_id', $id)->orderByDesc('scheduled_at')->first();
+
+        if (!$latestGame) {
+            return [
+                'data' => []
+            ];
+        }
+
+        $date = $latestGame->scheduled_at->toDateString();
+
+        $games = Game::where('tournament_id', $id)
+            ->whereDate('scheduled_at', $date)
+            ->get();
+
+        $gameIds = $games->pluck('id');
+
+        $playerStats = GameTeamPlayerStat::with(['player', 'team'])
+            ->whereIn('game_id', $gameIds)
+            ->get();
+
+        if ($playerStats->isEmpty()) {
+            return [
+                'data' => []
+            ];
+        }
+
+        $useReliability = filter_var($request->get('use_reliability', true), FILTER_VALIDATE_BOOLEAN);
+
+        $statIds = $playerStats->pluck('id')->toArray();
+        $imps = (new ImpController())->calcImpForStatIds($statIds, ['fullGame'], $useReliability);
+
+        $playersOfTheDay = $playerStats->map(function (GameTeamPlayerStat $stat) use ($imps) {
+            $imp = $imps[$stat->id]['fullGame']->imp ?? 0;
+
+            return new PlayerOfTheDayDto(
+                id: $stat->player_id,
+                fullName: $stat->player->full_name,
+                teamAlias: $stat->team->alias,
+                playedSeconds: $stat->played_seconds,
+                pts: $stat->points,
+                reb: $stat->rebounds,
+                ast: $stat->assists,
+                imp: $imp
+            );
+        })->sortByDesc('imp');
+
+        $limit = $request->get('limit', 5);
+
+        return PlayerOfTheDayResource::collection($playersOfTheDay->take($limit));
     }
 
     public function summary()
