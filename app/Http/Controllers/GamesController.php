@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\GamesListRequest;
 use App\Models\Game;
 use App\Models\GameTeamPlayerStat;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
 class GamesController extends Controller
@@ -28,6 +29,31 @@ class GamesController extends Controller
             'page',
             $request->getPage()
         );
+    }
+
+    public function search(Request $request)
+    {
+        $text = $request->get('text');
+        $limit = $request->get('limit', 10);
+
+        if (empty($text)) {
+            return ['data' => []];
+        }
+
+        $games = Game::query()
+            ->where(function ($query) use ($text) {
+                $query->where('title', 'ilike', "%{$text}%")
+                    ->orWhereHas('gameTeamStats.team', function ($query) use ($text) {
+                        $query->where('name', 'ilike', "%{$text}%")
+                            ->orWhere('alias', 'ilike', "%{$text}%");
+                    });
+            })
+            ->limit($limit)
+            ->get();
+
+        return [
+            'data' => $games
+        ];
     }
 
     /**
