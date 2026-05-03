@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\LeagueSummaryResource;
 use App\Models\League;
 use Illuminate\Routing\Controller;
 
@@ -13,7 +14,16 @@ class LeaguesController extends Controller
     public function index()
     {
         return [
-            'data' => League::withCount(['tournaments', 'games'])->orderBy('order')->get()
+            'data' => League::orderBy('order')->get()
         ];
+    }
+
+    public function summary()
+    {
+        $leagues = League::withCount(['tournaments', 'games'])
+            ->orderBy('order')
+            ->get();
+
+        return LeagueSummaryResource::collection($leagues);
     }
 }
