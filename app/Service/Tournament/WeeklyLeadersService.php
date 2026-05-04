@@ -1,38 +1,40 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Service\Tournament;
 
-use App\Http\Resources\WeeklyLeaderResource;
 use App\Models\Game;
 use App\Models\GameTeamPlayerStat;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Service\Imp\ImpService;
+use Carbon\Carbon;
 
-class WeeklyLeadersController extends Controller
+class WeeklyLeadersService
 {
-    public function index(Request $request)
-    {
-        $start = now()->startOfWeek();
-        $end = now()->endOfWeek();
+    public function __construct(
+        private readonly ImpService $impService
+    ) {}
 
-        $tournamentIds = $request->get('tournamentIds');
-        if (is_string($tournamentIds)) {
-            $tournamentIds = explode(',', $tournamentIds);
-        }
+    /**
+     * @param array<int> $tournamentIds
+     * @param Carbon|null $referenceDate
+     * @return array
+     */
+    public function calculateLeaders(array $tournamentIds = [], ?Carbon $referenceDate = null): array
+    {
+        $referenceDate = $referenceDate ?: now();
+        $start = $referenceDate->copy()->startOfWeek();
+        $end = $referenceDate->copy()->endOfWeek();
 
         $gameIdsQuery = Game::query()
             ->whereBetween('scheduled_at', [$start, $end]);
 
         if (!empty($tournamentIds)) {
-            $gameIdsQuery->whereIn('tournament_id', (array)$tournamentIds);
+            $gameIdsQuery->whereIn('tournament_id', $tournamentIds);
         }
 
         $gameIds = $gameIdsQuery->pluck('id');
 
         if ($gameIds->isEmpty()) {
-            return [
-                'data' => []
-            ];
+            return [];
         }
 
         $playerStats = GameTeamPlayerStat::with('player')
@@ -40,13 +42,11 @@ class WeeklyLeadersController extends Controller
             ->get();
 
         if ($playerStats->isEmpty()) {
-            return [
-                'data' => []
-            ];
+            return [];
         }
 
         $statIds = $playerStats->pluck('id')->toArray();
-        $imps = (new ImpController())->calcImpForStatIds($statIds, ['fullGame']);
+        $imps = $this->impService->calcImpForStatIds($statIds, ['fullGame']);
 
         $playerAverages = [];
 
@@ -92,6 +92,6 @@ class WeeklyLeadersController extends Controller
             }
         }
 
-        return WeeklyLeaderResource::collection($result);
+        return $result;
     }
 }

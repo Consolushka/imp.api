@@ -6,17 +6,25 @@ use App\Dtos\PlayerOfTheDayDto;
 use App\Http\Resources\PlayerOfTheDayResource;
 use App\Http\Resources\TournamentResource;
 use App\Http\Resources\TournamentSummaryResource;
+use App\Http\Resources\WeeklyLeaderResource;
 use App\Models\Game;
 use App\Models\GameTeamPlayerStat;
 use App\Models\GameTeamStat;
 use App\Models\Player;
 use App\Models\Tournament;
+use App\Service\Imp\ImpService;
+use App\Service\Tournament\WeeklyLeadersService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 
 class TournamentsController extends Controller
 {
+    public function __construct(
+        private readonly ImpService $impService
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -56,7 +64,7 @@ class TournamentsController extends Controller
         $useReliability = filter_var($request->get('use_reliability', true), FILTER_VALIDATE_BOOLEAN);
 
         $statIds = $playerStats->pluck('id')->toArray();
-        $imps = (new ImpController())->calcImpForStatIds($statIds, ['fullGame'], $useReliability);
+        $imps = $this->impService->calcImpForStatIds($statIds, ['fullGame'], $useReliability);
 
         $playersOfTheDay = $playerStats->map(function (GameTeamPlayerStat $stat) use ($imps) {
             $imp = $imps[$stat->id]['fullGame']->imp ?? 0;
@@ -146,7 +154,7 @@ class TournamentsController extends Controller
             $allStatIds = array_merge($allStatIds, $group['stat_ids']);
         }
 
-        $imps = (new ImpController())->calcImpForStatIds($allStatIds, ['fullGame']);
+        $imps = $this->impService->calcImpForStatIds($allStatIds, ['fullGame']);
 
         $bestPlayerId = null;
         $maxAvgImp = -INF;
@@ -178,5 +186,19 @@ class TournamentsController extends Controller
     public function show(Tournament $tournament): TournamentResource
     {
         return new TournamentResource($tournament);
+    }
+
+    public function weeklyLeaders(Request $request, WeeklyLeadersService $weeklyLeadersService): AnonymousResourceCollection
+    {
+        $tournamentIds = $request->get('tournamentIds');
+        if (is_string($tournamentIds)) {
+            $tournamentIds = array_filter(explode(',', $tournamentIds));
+        }
+
+        $referenceDate = $request->has('date') ? Carbon::parse($request->get('date')) : null;
+
+        $leaders = $weeklyLeadersService->calculateLeaders((array)$tournamentIds, $referenceDate);
+
+        return WeeklyLeaderResource::collection($leaders);
     }
 }
