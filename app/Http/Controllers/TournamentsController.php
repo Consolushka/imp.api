@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 
 class TournamentsController extends Controller
 {
@@ -35,55 +36,58 @@ class TournamentsController extends Controller
 
     public function playersOfTheDay(Request $request, int $id)
     {
-        $latestGame = Game::where('tournament_id', $id)->orderByDesc('scheduled_at')->first();
-
-        if (!$latestGame) {
-            return [
-                'data' => []
-            ];
-        }
-
-        $date = $latestGame->scheduled_at->toDateString();
-
-        $games = Game::where('tournament_id', $id)
-            ->whereDate('scheduled_at', $date)
-            ->get();
-
-        $gameIds = $games->pluck('id');
-
-        $playerStats = GameTeamPlayerStat::with(['player', 'team'])
-            ->whereIn('game_id', $gameIds)
-            ->get();
-
-        if ($playerStats->isEmpty()) {
-            return [
-                'data' => []
-            ];
-        }
-
+        $limit = $request->get('limit', 5);
         $useReliability = filter_var($request->get('use_reliability', true), FILTER_VALIDATE_BOOLEAN);
 
-        $statIds = $playerStats->pluck('id')->toArray();
-        $imps = $this->impService->calcImpForStatIds($statIds, ['fullGame'], $useReliability);
+        $cacheKey = "tournament_{$id}_players_of_the_day_limit_{$limit}_rel_{$useReliability}";
 
-        $playersOfTheDay = $playerStats->map(function (GameTeamPlayerStat $stat) use ($imps) {
-            $imp = $imps[$stat->id]['fullGame']->imp ?? 0;
+        return Cache::remember($cacheKey, now()->timezone('UTC')->endOfDay(), function () use ($id, $limit, $useReliability) {
+            $latestGame = Game::where('tournament_id', $id)->orderByDesc('scheduled_at')->first();
 
-            return new PlayerOfTheDayDto(
-                id: $stat->player_id,
-                fullName: $stat->player->full_name,
-                teamAlias: $stat->team->alias,
-                playedSeconds: $stat->played_seconds,
-                pts: $stat->points,
-                reb: $stat->rebounds,
-                ast: $stat->assists,
-                imp: $imp
-            );
-        })->sortByDesc('imp');
+            if (!$latestGame) {
+                return [
+                    'data' => []
+                ];
+            }
 
-        $limit = $request->get('limit', 5);
+            $date = $latestGame->scheduled_at->toDateString();
 
-        return PlayerOfTheDayResource::collection($playersOfTheDay->take($limit));
+            $games = Game::where('tournament_id', $id)
+                ->whereDate('scheduled_at', $date)
+                ->get();
+
+            $gameIds = $games->pluck('id');
+
+            $playerStats = GameTeamPlayerStat::with(['player', 'team'])
+                ->whereIn('game_id', $gameIds)
+                ->get();
+
+            if ($playerStats->isEmpty()) {
+                return [
+                    'data' => []
+                ];
+            }
+
+            $statIds = $playerStats->pluck('id')->toArray();
+            $imps = $this->impService->calcImpForStatIds($statIds, ['fullGame'], $useReliability);
+
+            $playersOfTheDay = $playerStats->map(function (GameTeamPlayerStat $stat) use ($imps) {
+                $imp = $imps[$stat->id]['fullGame']->imp ?? 0;
+
+                return new PlayerOfTheDayDto(
+                    id: $stat->player_id,
+                    fullName: $stat->player->full_name,
+                    teamAlias: $stat->team->alias,
+                    playedSeconds: $stat->played_seconds,
+                    pts: $stat->points,
+                    reb: $stat->rebounds,
+                    ast: $stat->assists,
+                    imp: $imp
+                );
+            })->sortByDesc('imp');
+
+            return PlayerOfTheDayResource::collection($playersOfTheDay->take($limit));
+        });
     }
 
     public function summary()
