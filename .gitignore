@@ -24,3 +24,6 @@ Homestead.json
 
 .gemini/
 gha-creds-*.json
+.DS_Store
+.github/
+.idea/

@@ -14,22 +14,19 @@ class WeeklyLeadersService
     ) {}
 
     /**
-     * @param array<int> $tournamentIds
+     * @param int $tournamentId
      * @param Carbon|null $referenceDate
      * @return array
      */
-    public function calculateLeaders(array $tournamentIds = [], ?Carbon $referenceDate = null): array
+    public function calculateLeaders(int $tournamentId, ?Carbon $referenceDate = null): array
     {
         $referenceDate = $referenceDate ?: now();
         $start = $referenceDate->copy()->startOfWeek();
         $end = $referenceDate->copy()->endOfWeek();
 
         $gameIdsQuery = Game::query()
-            ->whereBetween('scheduled_at', [$start, $end]);
-
-        if (!empty($tournamentIds)) {
-            $gameIdsQuery->whereIn('tournament_id', $tournamentIds);
-        }
+            ->whereBetween('scheduled_at', [$start, $end])
+            ->where('tournament_id', $tournamentId);
 
         $gameIds = $gameIdsQuery->pluck('id');
 
