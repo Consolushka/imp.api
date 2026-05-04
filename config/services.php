@@ -38,6 +38,10 @@ return [
     'imp_calculator' => [
         'url' => env('IMP_CALCULATOR_BASE_URL'),
         'token' => env('IMP_API_TOKEN'),
+    ],
+
+    'aggregator' => [
+        'token' => env('AGGREGATOR_API_TOKEN'),
     ]
 
 ];

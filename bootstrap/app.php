@@ -13,7 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'static.token' => \App\Http\Middleware\StaticTokenMiddleware::class,
+            'static.token'     => \App\Http\Middleware\StaticTokenMiddleware::class,
+            'aggregator.token' => \App\Http\Middleware\AggregatorTokenMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

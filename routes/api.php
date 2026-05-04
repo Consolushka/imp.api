@@ -11,9 +11,13 @@ use App\Http\Controllers\TournamentGamesController;
 use App\Http\Controllers\TournamentsController;
 use App\Http\Controllers\TournamentTeamsController;
 use App\Http\Controllers\SummaryController;
+use App\Http\Controllers\Webhooks\AggregatorWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('summary', [SummaryController::class, 'index']);
+
+Route::post('webhooks/aggregator/game-imported', [AggregatorWebhookController::class, 'gameImported'])
+    ->middleware('aggregator.token');
 
 Route::get('leagues/summary', [LeaguesController::class, 'summary']);
 Route::resource('leagues', LeaguesController::class)->only([
