@@ -172,18 +172,36 @@ class GamesController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(int $id)
+    public function show(Request $request, int $id)
     {
         $game = Game::query()
             ->with(['gameTeamStats', 'gameTeamStats.team'])
             ->where('id', $id)
             ->firstOrFail();
 
+        $per = PersEnum::tryFrom($request->get('per')) ?: PersEnum::FullGame;
+        $useReliability = filter_var($request->get('reliability', true), FILTER_VALIDATE_BOOLEAN);
+        $gameDuration = $game->duration ?: 40;
+
         /**@var GameTeamPlayerStat[] $playersStatsInGame*/
         $playersStatsInGame = GameTeamPlayerStat::query()
             ->with('player')
             ->where('game_id', $id)
             ->get()
+            ->each(function (GameTeamPlayerStat $stat) use ($game, $gameDuration, $per, $useReliability) {
+                /** @var GameTeamStat $teamStat */
+                $teamStat = $game->gameTeamStats->firstWhere('team_id', $stat->team_id);
+                $finalDiff = $teamStat ? $teamStat->final_differential : 0;
+
+                $stat->imp = ImpCalculator::evaluatePer(
+                    $stat->played_seconds,
+                    $stat->plus_minus,
+                    $finalDiff,
+                    $gameDuration,
+                    $per,
+                    $useReliability
+                );
+            })
             ->groupBy('team_id');
 
         $game->gameTeamStats->each(function ($gameTeamStat) use ($playersStatsInGame) {

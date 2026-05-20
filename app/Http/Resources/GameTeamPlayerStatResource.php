@@ -26,6 +26,7 @@ class GameTeamPlayerStatResource extends JsonResource
             'blocks' => $this->blocks,
             'field_goals_percentage' => $this->field_goals_percentage,
             'turnovers' => $this->turnovers,
+            'imp' => $this->imp ?? null,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
             'player' => new PlayerResource($this->whenLoaded('player')),
