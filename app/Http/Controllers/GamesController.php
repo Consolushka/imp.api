@@ -20,6 +20,12 @@ use Illuminate\Support\Facades\Cache;
 
 class GamesController extends Controller
 {
+    /**
+     * @param int $id
+     * @param NarrativeEngine $engine
+     * @param NarrativeTemplateService $templateService
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection<PlayerKeyPerformanceResource>
+     */
     public function keyPerformances(
         int $id,
         NarrativeEngine $engine,

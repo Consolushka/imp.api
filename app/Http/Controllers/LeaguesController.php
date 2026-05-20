@@ -11,12 +11,16 @@ class LeaguesController extends Controller
 {
     /**
      * Display a listing of the resource.
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection<LeagueResource>
      */
     public function index()
     {
         return LeagueResource::collection(League::orderBy('order')->get());
     }
 
+    /**
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection<LeagueSummaryResource>
+     */
     public function summary()
     {
         $leagues = League::withCount(['tournaments', 'games'])

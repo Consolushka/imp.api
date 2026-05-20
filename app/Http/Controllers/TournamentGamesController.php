@@ -9,6 +9,11 @@ use Illuminate\Routing\Controller;
 
 class TournamentGamesController extends Controller
 {
+    /**
+     * @param TournamentsGamesListRequest $request
+     * @param int $tournamentId
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection<GameResource>
+     */
     public function index(TournamentsGamesListRequest $request, int $tournamentId)
     {
         return GameResource::collection(

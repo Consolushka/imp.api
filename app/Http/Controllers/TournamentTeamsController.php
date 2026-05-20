@@ -10,6 +10,10 @@ use Illuminate\Routing\Controller;
 
 class TournamentTeamsController extends Controller
 {
+    /**
+     * @param int $tournamentId
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection<TeamResource>
+     */
     public function index(int $tournamentId)
     {
         $gameIds = Game::query()

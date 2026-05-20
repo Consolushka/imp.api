@@ -36,6 +36,11 @@ class TournamentsController extends Controller
         return TournamentResource::collection(Tournament::all());
     }
 
+    /**
+     * @param Request $request
+     * @param int $id
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection<PlayerOfTheDayResource>
+     */
     public function playersOfTheDay(Request $request, int $id)
     {
         $limit = $request->get('limit', 5);

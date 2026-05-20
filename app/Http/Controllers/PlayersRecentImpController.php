@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class PlayersRecentImpController extends Controller
 {
+    /**
+     * @param PlayersRecentImpRequest $request
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection<PlayersRecentImpResource>
+     */
     public function index(PlayersRecentImpRequest $request)
     {
         $playerIds = $request->getPlayerIds();

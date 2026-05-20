@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\Cache;
 
 class ImpRankingsController
 {
+    /**
+     * @param ImpRankingRequest $request
+     * @param RankingService $rankingService
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection<RankedPlayerResource>
+     */
     public function index(ImpRankingRequest $request, RankingService $rankingService)
     {
         $cacheKey = 'leaderboard_' . md5(json_encode($request->validated()));
