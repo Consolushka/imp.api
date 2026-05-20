@@ -24,7 +24,7 @@ class RankedPlayerResource extends JsonResource
             'team_alias'  => $this->resource->getTeamAlias(),
             'games_count' => $this->resource->getGames(),
             'avg_imp'     => $this->resource->getAvgImp(),
-            'avg_played_seconds' => $this->resource->getAvgPlayedSeconds(),
+            'avg_minutes' => round($this->resource->getAvgPlayedSeconds() / 60, 1),
         ];
     }
 }
