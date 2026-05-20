@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\GameResource;
+use App\Http\Resources\PlayerKeyPerformanceResource;
 use App\Http\Requests\GamesListRequest;
 use App\Models\Game;
 use App\Models\GameTeamPlayerStat;
@@ -24,8 +25,6 @@ class GamesController extends Controller
         NarrativeEngine $engine,
         NarrativeTemplateService $templateService
     ) {
-        // todo: remove
-        Cache::forget("game_{$id}_key_performances");
         return Cache::remember("game_{$id}_key_performances", now()->addWeek(), function () use ($id, $engine, $templateService) {
             $game = Game::query()
                 ->with(['gameTeamStats', 'gameTeamPlayerStats.player'])
@@ -113,9 +112,7 @@ class GamesController extends Controller
                 }
             }
 
-            return [
-                'data' => $results
-            ];
+            return PlayerKeyPerformanceResource::collection($results);
         });
     }
 

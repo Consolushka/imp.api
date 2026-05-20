@@ -47,9 +47,7 @@ class TournamentsController extends Controller
             $latestGame = Game::where('tournament_id', $id)->orderByDesc('scheduled_at')->first();
 
             if (!$latestGame) {
-                return [
-                    'data' => []
-                ];
+                return PlayerOfTheDayResource::collection(collect([]));
             }
 
             $date = $latestGame->scheduled_at->toDateString();
@@ -65,9 +63,7 @@ class TournamentsController extends Controller
                 ->get();
 
             if ($playerStats->isEmpty()) {
-                return [
-                    'data' => []
-                ];
+                return PlayerOfTheDayResource::collection(collect([]));
             }
 
             $statIds = $playerStats->pluck('id')->toArray();

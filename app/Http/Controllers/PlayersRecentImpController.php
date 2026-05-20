@@ -87,11 +87,11 @@ class PlayersRecentImpController extends Controller
             ];
         }
 
-        return [
-            'data' => PlayersRecentImpResource::collection($data),
-            'meta' => [
-                'per' => $request->getPer(),
-            ],
-        ];
+        return PlayersRecentImpResource::collection($data)
+            ->additional([
+                'meta' => [
+                    'per' => $request->getPer(),
+                ],
+            ]);
     }
 }

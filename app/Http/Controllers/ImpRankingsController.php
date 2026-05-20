@@ -13,12 +13,10 @@ class ImpRankingsController
     {
         $cacheKey = 'leaderboard_' . md5(json_encode($request->validated()));
 
-        return Cache::remember($cacheKey, now()->addDay(), function () use ($request, $rankingService) {
-            $leaderboard = $rankingService->calculate($request);
-
-            return [
-                'data' => RankedPlayerResource::collection($leaderboard),
-            ];
+        $leaderboard = Cache::remember($cacheKey, now()->addDay(), function () use ($request, $rankingService) {
+            return $rankingService->calculate($request);
         });
+
+        return RankedPlayerResource::collection($leaderboard);
     }
 }
