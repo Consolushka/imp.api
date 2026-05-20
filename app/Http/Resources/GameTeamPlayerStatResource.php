@@ -5,10 +5,31 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * @property float|null $imp
+ */
 class GameTeamPlayerStatResource extends JsonResource
 {
     /**
-     * @return array<string, mixed>
+     * @return array{
+     *     id: int,
+     *     game_id: int,
+     *     team_id: int,
+     *     player_id: int,
+     *     plus_minus: int,
+     *     played_seconds: int,
+     *     points: int,
+     *     assists: int,
+     *     rebounds: int,
+     *     steals: int,
+     *     blocks: int,
+     *     field_goals_percentage: float|int,
+     *     turnovers: int,
+     *     imp: float|null,
+     *     created_at: string,
+     *     updated_at: string,
+     *     player: PlayerResource|\Illuminate\Http\Resources\MissingValue
+     * }
      */
     public function toArray(Request $request): array
     {
@@ -26,7 +47,7 @@ class GameTeamPlayerStatResource extends JsonResource
             'blocks' => $this->blocks,
             'field_goals_percentage' => $this->field_goals_percentage,
             'turnovers' => $this->turnovers,
-            'imp' => $this->imp ?? null,
+            'imp' => $this->imp !== null ? (float) $this->imp : null,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
             'player' => new PlayerResource($this->whenLoaded('player')),
