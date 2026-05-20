@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\TeamResource;
 use App\Models\Game;
 use App\Models\GameTeamStat;
 use App\Models\Team;
@@ -20,10 +21,10 @@ class TournamentTeamsController extends Controller
             ->distinct()
             ->get('team_id');
 
-        return [
-            'data' => Team::query()
+        return TeamResource::collection(
+            Team::query()
                 ->whereIn('id', $teamIds)
                 ->get()
-        ];
+        );
     }
 }

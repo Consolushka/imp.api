@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class GameTeamStatResource extends JsonResource
+class TeamResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -14,14 +14,11 @@ class GameTeamStatResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'game_id' => $this->game_id,
-            'team_id' => $this->team_id,
-            'score' => $this->score,
-            'final_differential' => $this->final_differential,
+            'name' => $this->name,
+            'alias' => $this->alias,
+            'home_town' => $this->home_town,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
-            'team' => new TeamResource($this->whenLoaded('team')),
-            'playerStats' => GameTeamPlayerStatResource::collection($this->playerStats ?? []),
         ];
     }
 }
