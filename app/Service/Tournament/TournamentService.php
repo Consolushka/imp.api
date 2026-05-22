@@ -2,17 +2,60 @@
 
 namespace App\Service\Tournament;
 
+use App\Dtos\PlayerOfTheDayDto;
+use App\Models\Game;
 use App\Models\GameTeamStat;
 use App\Models\GameTeamPlayerStat;
 use App\Models\Player;
 use App\Models\Tournament;
 use App\Service\Imp\ImpService;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class TournamentService
 {
     public function __construct(
         private readonly ImpService $impService
     ) {}
+
+    public function calculatePlayersOfTheDay(int $tournamentId, Carbon $date, int $limit = 5, bool $useReliability = true): Collection
+    {
+        $games = Game::where('tournament_id', $tournamentId)
+            ->whereDate('scheduled_at', $date->toDateString())
+            ->get();
+
+        if ($games->isEmpty()) {
+            return collect();
+        }
+
+        $gameIds = $games->pluck('id');
+
+        $playerStats = GameTeamPlayerStat::with(['player', 'team'])
+            ->whereIn('game_id', $gameIds)
+            ->get();
+
+        if ($playerStats->isEmpty()) {
+            return collect();
+        }
+
+        $statIds = $playerStats->pluck('id')->toArray();
+        $imps = $this->impService->calcImpForStatIds($statIds, ['fullGame'], $useReliability);
+
+        return $playerStats->map(function (GameTeamPlayerStat $stat) use ($imps) {
+            $imp = $imps[$stat->id]['fullGame']->imp ?? 0;
+
+            return new PlayerOfTheDayDto(
+                id: (int)$stat->player_id,
+                fullName: $stat->player->full_name,
+                teamAlias: $stat->team->alias,
+                playedSeconds: (int)$stat->played_seconds,
+                pts: (int)$stat->points,
+                reb: (int)$stat->rebounds,
+                ast: (int)$stat->assists,
+                imp: (float)$imp
+            );
+        })->sortByDesc('imp')->take($limit)->values();
+    }
 
     public function getBestPlayerFullName(Tournament $tournament): string
     {

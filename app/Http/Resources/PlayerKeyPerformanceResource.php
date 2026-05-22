@@ -14,9 +14,9 @@ class PlayerKeyPerformanceResource extends JsonResource
     {
         return [
             'player_id' => $this['player_id'],
-            'player_name' => $this['player_name'],
+            'player_full_name' => $this['player_full_name'],
             'team_id' => $this['team_id'],
-            'narratives' => $this['narratives'],
+            'narrative' => $this['narrative'],
         ];
     }
 }

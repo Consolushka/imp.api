@@ -38,7 +38,7 @@ class GamesController extends Controller
 
             $gamePlayedMinutes = $game->duration ?: 40;
             $allPlayerStats = $game->gameTeamPlayerStats;
-            
+
             // 1. Calculate IMP for everyone to get contextual baseline
             $calculatedStats = $allPlayerStats->map(function (GameTeamPlayerStat $stat) use ($game, $gamePlayedMinutes) {
                 /** @var GameTeamStat $teamStat */
@@ -70,12 +70,14 @@ class GamesController extends Controller
             $maxAssists = $allPlayerStats->max('assists');
             $gameDurationSeconds = $gamePlayedMinutes * 60;
 
-            // 2. Build Contexts and Run Engine
+            // 2. Build Contexts and Assign Narratives
             $results = [];
+            $assignedSlugs = [];
+
             foreach ($calculatedStats as $data) {
                 /** @var GameTeamPlayerStat $stat */
                 $stat = $data['stat'];
-                
+
                 $context = new PlayerNarrativeContext(
                     playerId: $stat->player_id,
                     points: $stat->points,
@@ -87,7 +89,7 @@ class GamesController extends Controller
                     plusMinus: $stat->plus_minus,
                     impPerStart: $data['impPerStart'],
                     teamWon: $data['teamWon'],
-                    teamAverageGameImpPerStart: $teamAverages[$stat->team_id],
+                    teamAverageGameImpPerStart: $teamAverages[$stat->team_id] ?? 0,
                     maxGameImp: $maxImp,
                     maxGamePoints: $maxPoints,
                     maxGameRebounds: $maxRebounds,
@@ -95,31 +97,47 @@ class GamesController extends Controller
                     gameDurationSeconds: $gameDurationSeconds
                 );
 
-                $slugs = $engine->analyze($context);
-                $narratives = [];
-                
-                foreach ($slugs as $slug) {
+                $detectors = $engine->getDetectedDetectors($context);
+                // Sort detectors by tier so player gets their best narrative first
+                usort($detectors, fn($a, $b) => $a->getTier() <=> $b->getTier());
+
+                foreach ($detectors as $detector) {
+                    $slug = $detector->getSlug();
+                    if (isset($assignedSlugs[$slug])) {
+                        continue;
+                    }
+
                     $text = $templateService->enrich($slug, $context);
                     if ($text) {
-                        $narratives[] = [
-                            'slug' => $slug,
-                            'text' => $text,
+                        $assignedSlugs[$slug] = true;
+                        $results[] = [
+                            'player_id' => $stat->player_id,
+                            'player_full_name' => $stat->player->full_name,
+                            'team_id' => $stat->team_id,
+                            'narrative' => [
+                                'slug' => $slug,
+                                'text' => $text,
+                                'value' => $this->formatNarrativeValue($slug, $context),
+                            ],
                         ];
+                        // Only one narrative per player
+                        break;
                     }
-                }
-
-                if (!empty($narratives)) {
-                    $results[] = [
-                        'player_id' => $stat->player_id,
-                        'player_name' => $stat->player->name,
-                        'team_id' => $stat->team_id,
-                        'narratives' => $narratives,
-                    ];
                 }
             }
 
             return PlayerKeyPerformanceResource::collection($results);
         });
+    }
+
+    private function formatNarrativeValue(string $slug, PlayerNarrativeContext $context): string
+    {
+        return match ($slug) {
+            'lone_atlas', 'difference_maker', 'glue_guy', 'sinkhole', 'spark_plug', 'unsung_hero' => number_format($context->impPerStart, 1) . ' IMP',
+            'empty_stats', 'triple_double' => $context->points . ' PTS',
+            'carried_to_victory', 'cardio_session' => round($context->playedSeconds / 60) . ' MIN',
+            default => number_format($context->impPerStart, 1) . ' IMP',
+        };
     }
 
     /**

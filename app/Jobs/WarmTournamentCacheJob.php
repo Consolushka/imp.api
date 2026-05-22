@@ -48,5 +48,11 @@ class WarmTournamentCacheJob implements ShouldQueue
         $leaders = $weeklyLeadersService->calculateLeaders($this->tournamentId, $referenceDate);
         $leadersResource = WeeklyLeaderResource::collection($leaders);
         Cache::put("tournament_{$this->tournamentId}_weekly_leaders_{$dateStr}", $leadersResource, now()->timezone('UTC')->endOfDay());
+
+        // 3. Warm Players of the Day (End of day UTC)
+        // We warm with default parameters: limit=5, use_reliability=true
+        $playersOfTheDay = $tournamentService->calculatePlayersOfTheDay($this->tournamentId, $referenceDate, 5, true);
+        $playersOfTheDayResource = PlayerOfTheDayResource::collection($playersOfTheDay);
+        Cache::put("tournament_{$this->tournamentId}_players_of_the_day_limit_5_rel_1_date_{$dateStr}", $playersOfTheDayResource, now()->timezone('UTC')->endOfDay());
     }
 }

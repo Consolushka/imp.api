@@ -23,6 +23,20 @@ class NarrativeEngine
     }
 
     /**
+     * @return \App\Service\Narratives\Contracts\NarrativeDetector[]
+     */
+    public function getDetectedDetectors(PlayerNarrativeContext $context): array
+    {
+        $detected = [];
+        foreach ($this->detectors as $detector) {
+            if ($detector->isDetected($context)) {
+                $detected[] = $detector;
+            }
+        }
+        return $detected;
+    }
+
+    /**
      * @return string[] Slugs of detected narratives
      */
     public function analyze(PlayerNarrativeContext $context): array
