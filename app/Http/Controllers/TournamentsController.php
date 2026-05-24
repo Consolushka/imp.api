@@ -58,9 +58,12 @@ class TournamentsController extends Controller
         });
     }
 
-    public function summary()
+    public function summary(Request $request)
     {
         $tournaments = Tournament::query()
+            ->when($request->get('league'), function ($query, $leagueId) {
+                $query->where('league_id', $leagueId);
+            })
             ->withCount('games')
             ->addSelect(['teams_count' => GameTeamStat::query()
                 ->selectRaw('count(distinct team_id)')
