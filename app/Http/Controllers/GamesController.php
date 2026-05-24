@@ -181,6 +181,7 @@ class GamesController extends Controller
                             ->orWhere('alias', 'ilike', "%{$text}%");
                     });
             })
+            ->orderBy('scheduled_at', 'desc')
             ->limit($limit)
             ->get();
 
