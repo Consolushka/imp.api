@@ -61,7 +61,7 @@ class TournamentsController extends Controller
     public function summary(Request $request)
     {
         $tournaments = Tournament::query()
-            ->when($request->get('league'), function ($query, $leagueId) {
+            ->when($request->get('league_id'), function ($query, $leagueId) {
                 $query->where('league_id', $leagueId);
             })
             ->withCount('games')
