@@ -15,7 +15,7 @@ class LeaguesController extends Controller
      */
     public function index()
     {
-        return LeagueResource::collection(League::orderByDesc('tier')->get());
+        return LeagueResource::collection(League::orderBy('tier')->get());
     }
 
     /**
@@ -24,7 +24,7 @@ class LeaguesController extends Controller
     public function summary()
     {
         $leagues = League::withCount(['tournaments', 'games'])
-            ->orderByDesc('tier')
+            ->orderBy('tier')
             ->get();
 
         return LeagueSummaryResource::collection($leagues);
