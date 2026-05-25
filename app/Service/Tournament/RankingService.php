@@ -80,8 +80,6 @@ class RankingService
             }
         });
 
-        $playerImpsByCompositeKey = array_slice($playerImpsByCompositeKey, 0, $request->getLimit(), true);
-
         $position = 1;
         $leaderboard = [];
 

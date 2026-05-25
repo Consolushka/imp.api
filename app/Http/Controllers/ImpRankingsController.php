@@ -22,6 +22,11 @@ class ImpRankingsController
             return $rankingService->calculate($request);
         });
 
-        return RankedPlayerResource::collection($leaderboard);
+        $total = count($leaderboard);
+        $limit = $request->getLimit();
+        $slicedLeaderboard = array_slice($leaderboard, 0, $limit);
+
+        return RankedPlayerResource::collection($slicedLeaderboard)
+            ->additional(['meta' => ['total' => $total]]);
     }
 }
