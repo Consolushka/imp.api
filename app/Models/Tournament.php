@@ -42,4 +42,14 @@ class Tournament extends Model
     {
         return $this->hasMany(Game::class);
     }
+
+    public function pollLogs(): HasMany
+    {
+        return $this->hasMany(TournamentPollLog::class);
+    }
+
+    public function latestPollLog()
+    {
+        return $this->hasOne(TournamentPollLog::class)->latestOfMany();
+    }
 }

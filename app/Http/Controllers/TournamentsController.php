@@ -64,6 +64,7 @@ class TournamentsController extends Controller
             ->when($request->get('league_id'), function ($query, $leagueId) {
                 $query->where('league_id', $leagueId);
             })
+            ->with(['latestPollLog'])
             ->withCount('games')
             ->addSelect(['teams_count' => GameTeamStat::query()
                 ->selectRaw('count(distinct team_id)')
@@ -81,6 +82,10 @@ class TournamentsController extends Controller
                 now()->addDay(),
                 fn() => $this->tournamentService->getBestPlayerFullName($tournament)
             );
+
+            $tournament->next_update_at = $tournament->latestPollLog 
+                ? $tournament->latestPollLog->poll_start_at->addMinutes(30)
+                : null;
         }
 
         return TournamentSummaryResource::collection($tournaments);
