@@ -39,10 +39,6 @@ class RankingService
             $playerStatIdsQuery->where('played_seconds', '>', 0);
         }
 
-        if ($request->getMaxMinutes()) {
-            $playerStatIdsQuery->where('played_seconds', '<=', $request->getMaxMinutes() * 60);
-        }
-
         $playerStatRows = $playerStatIdsQuery->get(['player_id', 'team_id', 'id', 'played_seconds'])
             ->keyBy('id')
             ->toArray();

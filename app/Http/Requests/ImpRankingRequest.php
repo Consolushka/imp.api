@@ -50,11 +50,6 @@ class ImpRankingRequest extends FormRequest
         return $this->validated()['min_minutes'] ?? null;
     }
 
-    public function getMaxMinutes(): ?int
-    {
-        return $this->validated()['max_minutes'] ?? null;
-    }
-
     public function useReliability(): bool
     {
         return (bool) ($this->validated()['use_reliability'] ?? true);
@@ -87,7 +82,6 @@ class ImpRankingRequest extends FormRequest
             'min_games'       => 'integer|min:1',
             'team_id'         => 'exists:teams,id',
             'min_minutes'     => 'integer|min:1',
-            'max_minutes'     => 'integer|min:1',
             'use_reliability' => 'boolean',
         ];
     }
