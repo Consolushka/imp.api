@@ -25,6 +25,7 @@ class TournamentSummaryResource extends JsonResource
         return [
             'id'                    => $this->id,
             'name'                  => $this->name,
+            'tier'                  => $this->tier,
             'games_count'           => $this->games_count ?? 0,
             'teams_count'           => (int) ($this->teams_count ?? 0),
             'best_player_full_name' => $this->best_player_full_name ?? 'John Doe', // Placeholder
