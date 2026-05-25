@@ -44,7 +44,7 @@ Route::resource('tournaments.teams', TournamentTeamsController::class)->only([
 ]);
 
 Route::get('games/search', [GamesController::class, 'search']);
-Route::get('games/{id}/key-performances', [GamesController::class, 'keyPerformances']);
+Route::get('games/{id}/insights', [GamesController::class, 'insights']);
 Route::resource('games', GamesController::class)->only([
     'index', 'show'
 ]);

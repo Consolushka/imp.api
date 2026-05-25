@@ -26,12 +26,12 @@ class GamesController extends Controller
      * @param NarrativeTemplateService $templateService
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection<PlayerKeyPerformanceResource>
      */
-    public function keyPerformances(
+    public function insights(
         int $id,
         NarrativeEngine $engine,
         NarrativeTemplateService $templateService
     ) {
-        return Cache::remember("game_{$id}_key_performances", now()->addWeek(), function () use ($id, $engine, $templateService) {
+        return Cache::remember("game_{$id}_insights", now()->addWeek(), function () use ($id, $engine, $templateService) {
             $game = Game::query()
                 ->with(['gameTeamStats', 'gameTeamPlayerStats.player'])
                 ->findOrFail($id);
