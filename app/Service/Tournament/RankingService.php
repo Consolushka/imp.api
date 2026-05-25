@@ -35,6 +35,8 @@ class RankingService
 
         if ($request->getMinMinutes()) {
             $playerStatIdsQuery->where('played_seconds', '>=', $request->getMinMinutes() * 60);
+        } else {
+            $playerStatIdsQuery->where('played_seconds', '>', 0);
         }
 
         if ($request->getMaxMinutes()) {
