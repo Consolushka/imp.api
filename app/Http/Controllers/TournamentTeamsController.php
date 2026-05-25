@@ -18,16 +18,18 @@ class TournamentTeamsController extends Controller
     {
         $gameIds = Game::query()
             ->where('tournament_id', $tournamentId)
-            ->get('id');
+            ->pluck('id');
+
         $teamIds = GameTeamStat::query()
             ->whereIn('game_id', $gameIds)
             ->select('team_id')
             ->distinct()
-            ->get('team_id');
+            ->pluck('team_id');
 
         return TeamResource::collection(
             Team::query()
                 ->whereIn('id', $teamIds)
+                ->orderBy('name')
                 ->get()
         );
     }
