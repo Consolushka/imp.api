@@ -50,6 +50,11 @@ class ImpRankingRequest extends FormRequest
         return $this->validated()['min_minutes'] ?? null;
     }
 
+    public function getAvgMinutes(): ?int
+    {
+        return $this->validated()['avg_minutes'] ?? null;
+    }
+
     public function useReliability(): bool
     {
         return (bool) ($this->validated()['use_reliability'] ?? true);
@@ -82,6 +87,7 @@ class ImpRankingRequest extends FormRequest
             'min_games'       => 'integer|min:1',
             'team_id'         => 'exists:teams,id',
             'min_minutes'     => 'integer|min:1',
+            'avg_minutes'     => 'integer|min:1',
             'use_reliability' => 'boolean',
         ];
     }

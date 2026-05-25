@@ -58,6 +58,17 @@ class RankingService
             $playerSecondsByCompositeKey[$compositeKey][] = $playerStat['played_seconds'];
         }
 
+        $playerImpsByCompositeKey = array_filter($playerImpsByCompositeKey, function ($item) use ($request) {
+            return count($item) >= $request->getMinGames();
+        });
+
+        if ($request->getAvgMinutes()) {
+            $playerImpsByCompositeKey = array_filter($playerImpsByCompositeKey, function ($imps, $compositeKey) use ($request, $playerSecondsByCompositeKey) {
+                $avgSeconds = array_sum($playerSecondsByCompositeKey[$compositeKey]) / count($imps);
+                return $avgSeconds >= ($request->getAvgMinutes() * 60);
+            }, ARRAY_FILTER_USE_BOTH);
+        }
+
         uasort($playerImpsByCompositeKey, function ($a, $b) use ($request) {
             $avgA = array_sum($a) / count($a);
             $avgB = array_sum($b) / count($b);
@@ -67,10 +78,6 @@ class RankingService
             } else {
                 return $avgB <=> $avgA;
             }
-        });
-
-        $playerImpsByCompositeKey = array_filter($playerImpsByCompositeKey, function ($item) use ($request) {
-            return count($item) >= $request->getMinGames();
         });
 
         $playerImpsByCompositeKey = array_slice($playerImpsByCompositeKey, 0, $request->getLimit(), true);
