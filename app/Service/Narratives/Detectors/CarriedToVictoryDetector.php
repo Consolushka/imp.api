@@ -12,7 +12,8 @@ class CarriedToVictoryDetector implements NarrativeDetector
         return $context->teamWon === true
             && $context->playedSeconds >= $context->gameDurationSeconds * 0.7
             && $context->impPerStart < 0
-            && $context->impPerStart < $context->teamAverageGameImpPerStart;
+            && $context->impPerStart < $context->teamAverageGameImpPerStart
+            && $context->points <= $context->maxGamePoints * 0.4;
     }
 
     public function getWeight(PlayerNarrativeContext $context): float
