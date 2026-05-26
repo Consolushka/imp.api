@@ -9,7 +9,7 @@ class SparkPlugDetector implements NarrativeDetector
 {
     public function isDetected(PlayerNarrativeContext $context): bool
     {
-        return $context->playedSeconds > 0 
+        return $context->playedSeconds > $context->gameDurationSeconds * 0.3
             && $context->playedSeconds < $context->gameDurationSeconds * 0.6
             && $context->impPerStart > $context->teamAverageGameImpPerStart * 1.5;
     }

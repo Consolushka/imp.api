@@ -10,7 +10,7 @@ class LoneAtlasDetector implements NarrativeDetector
     public function isDetected(PlayerNarrativeContext $context): bool
     {
         return !$context->teamWon 
-            && ($context->points >= $context->maxGamePoints * 0.8 || $context->impPerStart >= $context->maxGameImp * 0.8);
+            && ($context->points >= $context->maxGamePoints * 0.8 && $context->impPerStart >= 0);
     }
 
     public function getTier(): int

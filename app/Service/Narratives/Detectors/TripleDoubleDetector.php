@@ -16,7 +16,7 @@ class TripleDoubleDetector implements NarrativeDetector
         if ($context->steals >= 10) $categories++;
         if ($context->blocks >= 10) $categories++;
 
-        return $categories >= 3;
+        return $categories > 3;
     }
 
     public function getTier(): int

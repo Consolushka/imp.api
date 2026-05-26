@@ -10,7 +10,7 @@ class GlueGuyDetector implements NarrativeDetector
     public function isDetected(PlayerNarrativeContext $context): bool
     {
         return $context->teamWon === true
-            && $context->points <= $context->maxGamePoints * 0.45
+            && $context->points <= $context->maxGamePoints * 0.3
             && $context->impPerStart >= $context->maxGameImp * 0.6;
     }
 

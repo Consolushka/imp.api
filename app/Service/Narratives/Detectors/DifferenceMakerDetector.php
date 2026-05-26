@@ -11,7 +11,7 @@ class DifferenceMakerDetector implements NarrativeDetector
     {
         return $context->teamWon 
             && $context->impPerStart > $context->teamAverageGameImpPerStart
-            && ($context->points >= $context->maxGamePoints * 0.8 || $context->impPerStart >= $context->maxGameImp * 0.8);
+            && $context->points >= $context->maxGamePoints * 0.7;
     }
 
     public function getTier(): int

@@ -11,7 +11,6 @@ class SinkholeDetector implements NarrativeDetector
     {
         return !$context->teamWon 
             && $context->impPerStart < $context->teamAverageGameImpPerStart
-            && $context->impPerStart < 0
             && $context->playedSeconds >= $context->gameDurationSeconds * 0.7;
     }
 

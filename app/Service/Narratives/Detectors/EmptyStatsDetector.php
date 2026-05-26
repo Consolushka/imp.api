@@ -10,7 +10,7 @@ class EmptyStatsDetector implements NarrativeDetector
     public function isDetected(PlayerNarrativeContext $context): bool
     {
         return $context->teamWon === false
-            && $context->points >= $context->maxGamePoints * 0.8
+            && $context->points >= $context->maxGamePoints * 0.75
             && $context->impPerStart < 0;
     }
 
