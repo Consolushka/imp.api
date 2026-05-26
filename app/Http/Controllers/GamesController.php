@@ -131,7 +131,7 @@ class GamesController extends Controller
                     continue;
                 }
 
-                $text = $templateService->enrich($option['slug'], $option['context']);
+                $text = $templateService->enrichForPlayer($option['slug'], $option['context']);
                 if ($text) {
                     $assignedPlayers[$option['player_id']] = true;
                     $assignedSlugs[$option['slug']] = true;

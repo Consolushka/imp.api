@@ -7,7 +7,7 @@ use App\Models\NarrativeTemplate;
 
 class NarrativeTemplateService
 {
-    public function enrich(string $slug, PlayerNarrativeContext $context): ?string
+    public function enrich(string $slug, array $placeholders): ?string
     {
         $template = NarrativeTemplate::where('slug', $slug)
             ->inRandomOrder()
@@ -17,10 +17,14 @@ class NarrativeTemplateService
             return null;
         }
 
-        return $this->hydrate($template->body, $context);
+        return str_replace(
+            array_keys($placeholders),
+            array_values($placeholders),
+            $template->body
+        );
     }
 
-    private function hydrate(string $body, PlayerNarrativeContext $context): string
+    public function enrichForPlayer(string $slug, PlayerNarrativeContext $context): ?string
     {
         $placeholders = [
             '{player}'    => \App\Models\Player::find($context->playerId)?->full_name ?? 'Unknown Player',
@@ -32,10 +36,6 @@ class NarrativeTemplateService
             '{minutes}'   => round($context->playedSeconds / 60),
         ];
 
-        return str_replace(
-            array_keys($placeholders),
-            array_values($placeholders),
-            $body
-        );
+        return $this->enrich($slug, $placeholders);
     }
 }

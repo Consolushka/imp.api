@@ -2,6 +2,7 @@
 
 namespace App\Service\Tournament;
 
+use App\Dtos\DailyContext;
 use App\Dtos\PlayerOfTheDayDto;
 use App\Models\Game;
 use App\Models\GameTeamStat;
@@ -17,6 +18,35 @@ class TournamentService
     public function __construct(
         private readonly ImpService $impService
     ) {}
+
+    public function getDailyContext(int $tournamentId, Carbon $date): DailyContext
+    {
+        $games = Game::with(['gameTeamStats'])
+            ->where('tournament_id', $tournamentId)
+            ->whereDate('scheduled_at', $date->toDateString())
+            ->get();
+
+        if ($games->isEmpty()) {
+            return new DailyContext(collect(), collect());
+        }
+
+        $gameIds = $games->pluck('id');
+
+        $playerStats = GameTeamPlayerStat::with(['player', 'team'])
+            ->whereIn('game_id', $gameIds)
+            ->get();
+
+        if ($playerStats->isNotEmpty()) {
+            $statIds = $playerStats->pluck('id')->toArray();
+            $imps = $this->impService->calcImpForStatIds($statIds, ['fullGame'], true);
+
+            foreach ($playerStats as $stat) {
+                $stat->imp = $imps[$stat->id]['fullGame']->imp ?? 0;
+            }
+        }
+
+        return new DailyContext($games, $playerStats);
+    }
 
     public function calculatePlayersOfTheDay(int $tournamentId, Carbon $date, int $limit = 5, bool $useReliability = true): Collection
     {

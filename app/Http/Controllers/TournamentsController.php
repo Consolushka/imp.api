@@ -13,6 +13,7 @@ use App\Models\GameTeamStat;
 use App\Models\Player;
 use App\Models\Tournament;
 use App\Service\Imp\ImpService;
+use App\Service\Narratives\DailyInsightEngine;
 use App\Service\Tournament\TournamentService;
 use App\Service\Tournament\WeeklyLeadersService;
 use Carbon\Carbon;
@@ -55,6 +56,20 @@ class TournamentsController extends Controller
             $playersOfTheDay = $this->tournamentService->calculatePlayersOfTheDay($id, $date, $limit, $useReliability);
 
             return PlayerOfTheDayResource::collection($playersOfTheDay);
+        });
+    }
+
+    public function dailyInsights(Request $request, int $id, DailyInsightEngine $engine)
+    {
+        $date = $request->has('date') ? Carbon::parse($request->get('date')) : now();
+        $dateStr = $date->toDateString();
+
+        $cacheKey = "tournament_{$id}_daily_insights_{$dateStr}";
+
+        return Cache::remember($cacheKey, now()->endOfDay(), function () use ($id, $date, $engine) {
+            $context = $this->tournamentService->getDailyContext($id, $date);
+
+            return $engine->analyze($context);
         });
     }
 

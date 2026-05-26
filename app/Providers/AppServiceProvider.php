@@ -3,6 +3,18 @@
 namespace App\Providers;
 
 use App\Infrastructure\ImpCalculator\ImpCalculatorConnector;
+use App\Service\Narratives\DailyDetectors\AssistMaestroDetector;
+use App\Service\Narratives\DailyDetectors\DailyMvpDetector;
+use App\Service\Narratives\DailyDetectors\DailyScoringChampDetector;
+use App\Service\Narratives\DailyDetectors\EliteEfficiencyDetector;
+use App\Service\Narratives\DailyDetectors\GlassEaterDetector;
+use App\Service\Narratives\DailyDetectors\HiddenValueDetector;
+use App\Service\Narratives\DailyDetectors\HighOctaneDetector;
+use App\Service\Narratives\DailyDetectors\NailBiterDetector;
+use App\Service\Narratives\DailyDetectors\SteamrollerDetector;
+use App\Service\Narratives\DailyDetectors\TheWallDetector;
+use App\Service\Narratives\DailyDetectors\TripleDoubleClubDetector;
+use App\Service\Narratives\DailyInsightEngine;
 use App\Service\Narratives\Detectors\CardioSessionDetector;
 use App\Service\Narratives\Detectors\CarriedToVictoryDetector;
 use App\Service\Narratives\Detectors\DifferenceMakerDetector;
@@ -41,8 +53,26 @@ class AppServiceProvider extends ServiceProvider
             TripleDoubleDetector::class,
         ], 'narrative.detectors');
 
+        $this->app->tag([
+            DailyMvpDetector::class,
+            DailyScoringChampDetector::class,
+            NailBiterDetector::class,
+            SteamrollerDetector::class,
+            HighOctaneDetector::class,
+            AssistMaestroDetector::class,
+            GlassEaterDetector::class,
+            TheWallDetector::class,
+            TripleDoubleClubDetector::class,
+            EliteEfficiencyDetector::class,
+            HiddenValueDetector::class,
+        ], 'daily_insight.detectors');
+
         $this->app->bind(NarrativeEngine::class, function ($app) {
             return new NarrativeEngine($app->tagged('narrative.detectors'));
+        });
+
+        $this->app->bind(DailyInsightEngine::class, function ($app) {
+            return new DailyInsightEngine($app->tagged('daily_insight.detectors'), $app->make(\App\Service\Narratives\NarrativeTemplateService::class));
         });
     }
 
