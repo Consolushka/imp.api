@@ -7,6 +7,7 @@ use App\Service\Narratives\Detectors\CardioSessionDetector;
 use App\Service\Narratives\Detectors\CarriedToVictoryDetector;
 use App\Service\Narratives\Detectors\DifferenceMakerDetector;
 use App\Service\Narratives\Detectors\EmptyStatsDetector;
+use App\Service\Narratives\Detectors\ForgottenPillarDetector;
 use App\Service\Narratives\Detectors\GlueGuyDetector;
 use App\Service\Narratives\Detectors\LoneAtlasDetector;
 use App\Service\Narratives\Detectors\SinkholeDetector;
@@ -33,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
             SparkPlugDetector::class,
             CarriedToVictoryDetector::class,
             EmptyStatsDetector::class,
+            ForgottenPillarDetector::class,
             UnsungHeroDetector::class,
             GlueGuyDetector::class,
             CardioSessionDetector::class,

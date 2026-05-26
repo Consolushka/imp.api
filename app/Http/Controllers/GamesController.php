@@ -96,7 +96,8 @@ class GamesController extends Controller
                     gameDurationSeconds: $gameDurationSeconds
                 );
 
-                foreach ($engine->getDetectedDetectors($context) as $detector) {
+                $narrativeDetectors = $engine->getDetectedDetectors($context);
+                foreach ($narrativeDetectors as $detector) {
                     $allOptions[] = [
                         'player_id' => $stat->player_id,
                         'player_full_name' => $stat->player->full_name,
