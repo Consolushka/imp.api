@@ -14,6 +14,11 @@ class UnsungHeroDetector implements NarrativeDetector
             && $context->impPerStart >= $context->maxGameImp * 0.8;
     }
 
+    public function getWeight(PlayerNarrativeContext $context): float
+    {
+        return $context->impPerStart;
+    }
+
     public function getTier(): int
     {
         return 2;

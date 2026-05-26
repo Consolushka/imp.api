@@ -16,6 +16,11 @@ class CardioSessionDetector implements NarrativeDetector
             && abs($context->impPerStart) < 1.0;
     }
 
+    public function getWeight(PlayerNarrativeContext $context): float
+    {
+        return (float) $context->playedSeconds;
+    }
+
     public function getTier(): int
     {
         return 2;

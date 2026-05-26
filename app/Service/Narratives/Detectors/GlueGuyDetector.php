@@ -14,6 +14,11 @@ class GlueGuyDetector implements NarrativeDetector
             && $context->impPerStart >= $context->maxGameImp * 0.6;
     }
 
+    public function getWeight(PlayerNarrativeContext $context): float
+    {
+        return $context->impPerStart + ($context->assists * 2) + ($context->rebounds * 2);
+    }
+
     public function getTier(): int
     {
         return 2;

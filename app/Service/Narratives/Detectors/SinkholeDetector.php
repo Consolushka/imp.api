@@ -14,6 +14,11 @@ class SinkholeDetector implements NarrativeDetector
             && $context->playedSeconds >= $context->gameDurationSeconds * 0.7;
     }
 
+    public function getWeight(PlayerNarrativeContext $context): float
+    {
+        return abs($context->impPerStart) * ($context->playedSeconds / 60);
+    }
+
     public function getTier(): int
     {
         return 1;

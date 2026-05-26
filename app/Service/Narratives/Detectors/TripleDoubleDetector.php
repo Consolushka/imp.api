@@ -19,6 +19,11 @@ class TripleDoubleDetector implements NarrativeDetector
         return $categories > 3;
     }
 
+    public function getWeight(PlayerNarrativeContext $context): float
+    {
+        return (float) ($context->points + $context->rebounds + $context->assists + $context->steals + $context->blocks);
+    }
+
     public function getTier(): int
     {
         return 2;

@@ -14,6 +14,11 @@ class EmptyStatsDetector implements NarrativeDetector
             && $context->impPerStart < 0;
     }
 
+    public function getWeight(PlayerNarrativeContext $context): float
+    {
+        return $context->points * abs($context->impPerStart ?: 1);
+    }
+
     public function getTier(): int
     {
         return 1;

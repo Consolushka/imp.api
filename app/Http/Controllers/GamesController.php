@@ -70,9 +70,8 @@ class GamesController extends Controller
             $maxAssists = $allPlayerStats->max('assists');
             $gameDurationSeconds = $gamePlayedMinutes * 60;
 
-            // 2. Build Contexts and Assign Narratives
-            $results = [];
-            $assignedSlugs = [];
+            // 2. Build Contexts and Gather potential narratives
+            $allOptions = [];
 
             foreach ($calculatedStats as $data) {
                 /** @var GameTeamPlayerStat $stat */
@@ -97,32 +96,54 @@ class GamesController extends Controller
                     gameDurationSeconds: $gameDurationSeconds
                 );
 
-                $detectors = $engine->getDetectedDetectors($context);
-                // Sort detectors by tier so player gets their best narrative first
-                usort($detectors, fn($a, $b) => $a->getTier() <=> $b->getTier());
+                foreach ($engine->getDetectedDetectors($context) as $detector) {
+                    $allOptions[] = [
+                        'player_id' => $stat->player_id,
+                        'player_full_name' => $stat->player->full_name,
+                        'team_id' => $stat->team_id,
+                        'slug' => $detector->getSlug(),
+                        'tier' => $detector->getTier(),
+                        'weight' => $detector->getWeight($context),
+                        'context' => $context,
+                    ];
+                }
+            }
 
-                foreach ($detectors as $detector) {
-                    $slug = $detector->getSlug();
-                    if (isset($assignedSlugs[$slug])) {
-                        continue;
-                    }
+            // 3. Sort options by Tier (lower is better) then Weight (higher is better)
+            usort($allOptions, function ($a, $b) {
+                if ($a['tier'] !== $b['tier']) {
+                    return $a['tier'] <=> $b['tier'];
+                }
+                return $b['weight'] <=> $a['weight'];
+            });
 
-                    $text = $templateService->enrich($slug, $context);
-                    if ($text) {
-                        $assignedSlugs[$slug] = true;
-                        $results[] = [
-                            'player_id' => $stat->player_id,
-                            'player_full_name' => $stat->player->full_name,
-                            'team_id' => $stat->team_id,
-                            'narrative' => [
-                                'slug' => $slug,
-                                'text' => $text,
-                                'value' => $this->formatNarrativeValue($slug, $context),
-                            ],
-                        ];
-                        // Only one narrative per player
-                        break;
-                    }
+            // 4. Assign narratives (max 1 per player, unique across game)
+            $assignedPlayers = [];
+            $assignedSlugs = [];
+            $results = [];
+
+            foreach ($allOptions as $option) {
+                if (isset($assignedPlayers[$option['player_id']])) {
+                    continue;
+                }
+                if (isset($assignedSlugs[$option['slug']])) {
+                    continue;
+                }
+
+                $text = $templateService->enrich($option['slug'], $option['context']);
+                if ($text) {
+                    $assignedPlayers[$option['player_id']] = true;
+                    $assignedSlugs[$option['slug']] = true;
+                    $results[] = [
+                        'player_id' => $option['player_id'],
+                        'player_full_name' => $option['player_full_name'],
+                        'team_id' => $option['team_id'],
+                        'narrative' => [
+                            'slug' => $option['slug'],
+                            'text' => $text,
+                            'value' => $this->formatNarrativeValue($option['slug'], $option['context']),
+                        ],
+                    ];
                 }
             }
 

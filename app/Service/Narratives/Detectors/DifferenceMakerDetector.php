@@ -14,6 +14,11 @@ class DifferenceMakerDetector implements NarrativeDetector
             && $context->points >= $context->maxGamePoints * 0.7;
     }
 
+    public function getWeight(PlayerNarrativeContext $context): float
+    {
+        return $context->impPerStart;
+    }
+
     public function getTier(): int
     {
         return 1;
