@@ -51,7 +51,7 @@ class GamesController extends Controller
                     $stat->plus_minus,
                     $finalDiff,
                     $gamePlayedMinutes,
-                    PersEnum::Start
+                    PersEnum::FullGame
                 );
 
                 return [
