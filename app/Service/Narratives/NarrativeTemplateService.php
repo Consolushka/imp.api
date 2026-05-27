@@ -46,7 +46,7 @@ class NarrativeTemplateService
             'lone_atlas', 'difference_maker', 'glue_guy', 'sinkhole', 'spark_plug', 'unsung_hero', 'forgotten_pillar' => number_format($context->impPerStart, 1) . ' IMP',
             'empty_stats', 'triple_double' => $context->points . ' PTS',
             'carried_to_victory', 'cardio_session' => round($context->playedSeconds / 60) . ' MIN',
-            'ice_cold' => (int) ($context->fieldGoalsPercentage * 100) . '% FG',
+            'ice_cold', 'sniper' => (int) ($context->fieldGoalsPercentage * 100) . '% FG',
             default => number_format($context->impPerStart, 1) . ' IMP',
         };
     }

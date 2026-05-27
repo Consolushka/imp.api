@@ -14,10 +14,9 @@ class EliteEfficiencyDetector implements DailyInsightDetector
             return [];
         }
 
-        // Find best FG% with at least 10 attempts
-        // Assuming models have field_goals_attempted and field_goals_percentage
+        // Find best FG% with at least 15 points to ensure volume
         $topStat = $context->playerStats
-            ->filter(fn($s) => ($s->field_goals_attempted ?? 0) >= 10)
+            ->filter(fn($s) => $s->points >= 15)
             ->sortByDesc('field_goals_percentage')
             ->first();
 

@@ -23,6 +23,7 @@ use App\Service\Narratives\Detectors\ForgottenPillarDetector;
 use App\Service\Narratives\Detectors\GlueGuyDetector;
 use App\Service\Narratives\Detectors\IceColdDetector;
 use App\Service\Narratives\Detectors\LoneAtlasDetector;
+use App\Service\Narratives\Detectors\SniperDetector;
 use App\Service\Narratives\Detectors\SinkholeDetector;
 use App\Service\Narratives\Detectors\SparkPlugDetector;
 use App\Service\Narratives\Detectors\TripleDoubleDetector;
@@ -49,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
             EmptyStatsDetector::class,
             ForgottenPillarDetector::class,
             IceColdDetector::class,
+            SniperDetector::class,
             UnsungHeroDetector::class,
             GlueGuyDetector::class,
             CardioSessionDetector::class,
