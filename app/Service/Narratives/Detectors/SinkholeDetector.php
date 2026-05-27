@@ -11,7 +11,7 @@ class SinkholeDetector implements NarrativeDetector
     {
         return !$context->teamWon 
             && $context->impPerStart < $context->teamAverageGameImpPerStart
-            && $context->playedSeconds >= $context->gameDurationSeconds * 0.7;
+            && $context->playedSeconds >= $context->gameDurationSeconds * 0.6;
     }
 
     public function getWeight(PlayerNarrativeContext $context): float
