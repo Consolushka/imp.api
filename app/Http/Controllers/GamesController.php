@@ -87,6 +87,7 @@ class GamesController extends Controller
                     playedSeconds: $stat->played_seconds,
                     plusMinus: $stat->plus_minus,
                     impPerStart: $data['impPerStart'],
+                    fieldGoalsPercentage: (float) ($stat->field_goals_percentage ?? 0),
                     teamWon: $data['teamWon'],
                     teamAverageGameImpPerStart: $teamAverages[$stat->team_id] ?? 0,
                     maxGameImp: $maxImp,
@@ -158,6 +159,7 @@ class GamesController extends Controller
             'lone_atlas', 'difference_maker', 'glue_guy', 'sinkhole', 'spark_plug', 'unsung_hero' => number_format($context->impPerStart, 1) . ' IMP',
             'empty_stats', 'triple_double' => $context->points . ' PTS',
             'carried_to_victory', 'cardio_session' => round($context->playedSeconds / 60) . ' MIN',
+            'ice_cold' => (int) ($context->fieldGoalsPercentage * 100) . '% FG',
             default => number_format($context->impPerStart, 1) . ' IMP',
         };
     }

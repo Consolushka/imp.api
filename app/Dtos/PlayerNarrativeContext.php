@@ -14,6 +14,7 @@ readonly class PlayerNarrativeContext
         public int   $playedSeconds,
         public int   $plusMinus,
         public float $impPerStart,
+        public float $fieldGoalsPercentage,
         public bool  $teamWon,
         // Contextual game/tournament data for comparison
         public float $teamAverageGameImpPerStart,
