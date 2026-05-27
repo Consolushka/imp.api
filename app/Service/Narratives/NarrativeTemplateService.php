@@ -31,7 +31,7 @@ class NarrativeTemplateService
             '{points}'    => $context->points,
             '{rebounds}'  => $context->rebounds,
             '{assists}'   => $context->assists,
-            '{imp}'       => number_format($context->impPerStart, 2),
+            '{imp}'       => number_format($context->impPerStart, 1),
             '{plusMinus}' => ($context->plusMinus > 0 ? '+' : '') . $context->plusMinus,
             '{minutes}'   => round($context->playedSeconds / 60),
             '{value}'     => $this->formatValueForPlayer($slug, $context),
@@ -43,9 +43,10 @@ class NarrativeTemplateService
     public function formatValueForPlayer(string $slug, PlayerNarrativeContext $context): string
     {
         return match ($slug) {
-            'lone_atlas', 'difference_maker', 'glue_guy', 'sinkhole', 'spark_plug', 'unsung_hero', 'forgotten_pillar' => number_format($context->impPerStart, 1) . ' IMP',
-            'empty_stats', 'triple_double' => $context->points . ' PTS',
-            'carried_to_victory', 'cardio_session' => round($context->playedSeconds / 60) . ' MIN',
+            'lone_atlas', 'difference_maker', 'glue_guy', 'sinkhole', 'spark_plug', 'unsung_hero', 'forgotten_pillar', 'carried_to_victory' => number_format($context->impPerStart, 1) . ' IMP',
+            'empty_stats' => $context->points . ' PTS',
+            'triple_double' => 'Triple-Double',
+            'cardio_session' => round($context->playedSeconds / 60) . ' MIN',
             'ice_cold', 'sniper' => (int) ($context->fieldGoalsPercentage * 100) . '% FG',
             default => number_format($context->impPerStart, 1) . ' IMP',
         };
