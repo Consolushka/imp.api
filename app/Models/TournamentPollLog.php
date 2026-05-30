@@ -15,6 +15,7 @@ class TournamentPollLog extends Model
         'poll_end_at',
         'interval_start',
         'interval_end',
+        'next_poll_at',
         'saved_games_count',
         'status',
         'error_message',
@@ -25,6 +26,7 @@ class TournamentPollLog extends Model
         'poll_end_at' => 'datetime',
         'interval_start' => 'datetime',
         'interval_end' => 'datetime',
+        'next_poll_at' => 'datetime',
         'saved_games_count' => 'integer',
         'created_at' => 'datetime',
     ];

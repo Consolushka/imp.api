@@ -98,9 +98,7 @@ class TournamentsController extends Controller
                 fn() => $this->tournamentService->getBestPlayerFullName($tournament)
             );
 
-            $tournament->next_update_at = $tournament->latestPollLog 
-                ? $tournament->latestPollLog->poll_start_at->addMinutes(30)
-                : null;
+            $tournament->next_update_at = $tournament->latestPollLog?->next_poll_at;
         }
 
         return TournamentSummaryResource::collection($tournaments);
