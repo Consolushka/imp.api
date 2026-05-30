@@ -14,6 +14,11 @@ class SparkPlugDetector implements NarrativeDetector
             && $context->impPerStart > $context->teamAverageGameImpPerStart * 1.5;
     }
 
+    public function getValue(PlayerNarrativeContext $context): string
+    {
+        return number_format($context->impPerStart, 1) . ' IMP';
+    }
+
     public function getWeight(PlayerNarrativeContext $context): float
     {
         $minutes = $context->playedSeconds / 60;

@@ -14,6 +14,11 @@ class SniperDetector implements NarrativeDetector
             && $context->fieldGoalsPercentage >= 0.65;
     }
 
+    public function getValue(PlayerNarrativeContext $context): string
+    {
+        return (int) ($context->fieldGoalsPercentage * 100) . '% FG';
+    }
+
     public function getWeight(PlayerNarrativeContext $context): float
     {
         return $context->fieldGoalsPercentage * ($context->playedSeconds / 60);

@@ -13,6 +13,11 @@ class LoneAtlasDetector implements NarrativeDetector
             && ($context->points >= $context->maxGamePoints * 0.8 && $context->impPerStart >= 0);
     }
 
+    public function getValue(PlayerNarrativeContext $context): string
+    {
+        return number_format($context->impPerStart, 1) . ' IMP';
+    }
+
     public function getWeight(PlayerNarrativeContext $context): float
     {
         return $context->impPerStart * ($context->points ?: 1);

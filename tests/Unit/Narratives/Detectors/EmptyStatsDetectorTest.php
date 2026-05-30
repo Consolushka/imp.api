@@ -64,6 +64,12 @@ class EmptyStatsDetectorTest extends TestCase
         $this->assertFalse($this->detector->isDetected($context));
     }
 
+    public function test_it_returns_correct_value()
+    {
+        $context = $this->createContext(['points' => 25]);
+        $this->assertEquals('25 PTS', $this->detector->getValue($context));
+    }
+
     private function createContext(array $overrides): PlayerNarrativeContext
     {
         return new PlayerNarrativeContext(
@@ -76,6 +82,7 @@ class EmptyStatsDetectorTest extends TestCase
             playedSeconds: 1800,
             plusMinus: 0,
             impPerStart: $overrides['impPerStart'] ?? 0.0,
+            fieldGoalsPercentage: 0.0,
             teamWon: $overrides['teamWon'] ?? false,
             teamAverageGameImpPerStart: 0.0,
             maxGameImp: 10.0,

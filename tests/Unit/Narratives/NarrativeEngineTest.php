@@ -81,6 +81,7 @@ class NarrativeEngineTest extends TestCase
         $mock->shouldReceive('getTier')->andReturn($tier);
         $mock->shouldReceive('isAdditive')->andReturn($additive);
         $mock->shouldReceive('isDetected')->andReturn($detected);
+        $mock->shouldReceive('getValue')->andReturn('10.0 IMP');
         
         return $mock;
     }
@@ -88,7 +89,7 @@ class NarrativeEngineTest extends TestCase
     private function createContext(): PlayerNarrativeContext
     {
         return new PlayerNarrativeContext(
-            1, 0, 0, 0, 0, 0, 0, 0, 0.0, true, 0.0, 0.0, 0, 0, 0, 2400
+            1, 0, 0, 0, 0, 0, 0, 0, 0.0, 0.0, true, 0.0, 0.0, 0, 0, 0, 2400
         );
     }
 }

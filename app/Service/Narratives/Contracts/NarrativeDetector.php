@@ -8,6 +8,8 @@ interface NarrativeDetector
 {
     public function isDetected(PlayerNarrativeContext $context): bool;
 
+    public function getValue(PlayerNarrativeContext $context): string;
+
     public function getWeight(PlayerNarrativeContext $context): float;
 
     public function getTier(): int;

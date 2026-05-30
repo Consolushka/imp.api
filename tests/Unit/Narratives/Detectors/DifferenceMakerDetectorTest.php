@@ -86,6 +86,12 @@ class DifferenceMakerDetectorTest extends TestCase
         $this->assertFalse($this->detector->isDetected($context));
     }
 
+    public function test_it_returns_correct_value()
+    {
+        $context = $this->createContext(['impPerStart' => 10.0]);
+        $this->assertEquals('10.0 IMP', $this->detector->getValue($context));
+    }
+
     private function createContext(array $overrides): PlayerNarrativeContext
     {
         return new PlayerNarrativeContext(
@@ -98,6 +104,7 @@ class DifferenceMakerDetectorTest extends TestCase
             playedSeconds: $overrides['playedSeconds'] ?? 1800,
             plusMinus: $overrides['plusMinus'] ?? 5,
             impPerStart: $overrides['impPerStart'] ?? 5.0,
+            fieldGoalsPercentage: 0.0,
             teamWon: $overrides['teamWon'] ?? true,
             teamAverageGameImpPerStart: $overrides['teamAverageGameImpPerStart'] ?? 4.0,
             maxGameImp: $overrides['maxGameImp'] ?? 10.0,

@@ -14,6 +14,11 @@ class IceColdDetector implements NarrativeDetector
             && $context->fieldGoalsPercentage < 0.33;
     }
 
+    public function getValue(PlayerNarrativeContext $context): string
+    {
+        return (int) ($context->fieldGoalsPercentage * 100) . '% FG';
+    }
+
     public function getWeight(PlayerNarrativeContext $context): float
     {
         return (0.33 - $context->fieldGoalsPercentage) * ($context->playedSeconds / 60);

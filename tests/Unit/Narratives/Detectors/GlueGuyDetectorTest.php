@@ -55,6 +55,12 @@ class GlueGuyDetectorTest extends TestCase
         $this->assertFalse($this->detector->isDetected($context));
     }
 
+    public function test_it_returns_correct_value()
+    {
+        $context = $this->createContext(['impPerStart' => 10.5]);
+        $this->assertEquals('10.5 IMP', $this->detector->getValue($context));
+    }
+
     private function createContext(array $overrides): PlayerNarrativeContext
     {
         return new PlayerNarrativeContext(
@@ -67,6 +73,7 @@ class GlueGuyDetectorTest extends TestCase
             playedSeconds: 1800,
             plusMinus: 0,
             impPerStart: $overrides['impPerStart'] ?? 0.0,
+            fieldGoalsPercentage: 0.0,
             teamWon: $overrides['teamWon'] ?? true,
             teamAverageGameImpPerStart: 0.0,
             maxGameImp: $overrides['maxGameImp'] ?? 15.0,

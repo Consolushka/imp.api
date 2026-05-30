@@ -49,7 +49,7 @@ class CardioSessionDetectorTest extends TestCase
         $context = $this->createContext([
             'playedSeconds' => 1800,
             'gameDurationSeconds' => 2400,
-            'points' => 5, // > 10% of 30
+            'points' => 10, // > 10% of 30
             'rebounds' => 1,
             'assists' => 1,
             'impPerStart' => 0.5,
@@ -72,6 +72,12 @@ class CardioSessionDetectorTest extends TestCase
         $this->assertFalse($this->detector->isDetected($context));
     }
 
+    public function test_it_returns_correct_value()
+    {
+        $context = $this->createContext(['impPerStart' => 0.5]);
+        $this->assertEquals('0.5 IMP', $this->detector->getValue($context));
+    }
+
     private function createContext(array $overrides): PlayerNarrativeContext
     {
         return new PlayerNarrativeContext(
@@ -84,6 +90,7 @@ class CardioSessionDetectorTest extends TestCase
             playedSeconds: $overrides['playedSeconds'] ?? 0,
             plusMinus: 0,
             impPerStart: $overrides['impPerStart'] ?? 0.0,
+            fieldGoalsPercentage: 0.0,
             teamWon: true,
             teamAverageGameImpPerStart: 0.0,
             maxGameImp: 15.0,

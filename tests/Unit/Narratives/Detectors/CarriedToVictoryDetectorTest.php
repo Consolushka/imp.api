@@ -67,11 +67,17 @@ class CarriedToVictoryDetectorTest extends TestCase
         $this->assertFalse($this->detector->isDetected($context));
     }
 
+    public function test_it_returns_correct_value()
+    {
+        $context = $this->createContext(['impPerStart' => -5.0]);
+        $this->assertEquals('-5.0 IMP', $this->detector->getValue($context));
+    }
+
     private function createContext(array $overrides): PlayerNarrativeContext
     {
         return new PlayerNarrativeContext(
             playerId: 1,
-            points: $overrides['points'] ?? 10,
+            points: $overrides['points'] ?? 5,
             rebounds: $overrides['rebounds'] ?? 5,
             assists: $overrides['assists'] ?? 5,
             steals: 1,
@@ -79,6 +85,7 @@ class CarriedToVictoryDetectorTest extends TestCase
             playedSeconds: $overrides['playedSeconds'] ?? 1800,
             plusMinus: $overrides['plusMinus'] ?? 5,
             impPerStart: $overrides['impPerStart'] ?? 5.0,
+            fieldGoalsPercentage: 0.0,
             teamWon: $overrides['teamWon'] ?? true,
             teamAverageGameImpPerStart: $overrides['teamAverageGameImpPerStart'] ?? 4.0,
             maxGameImp: 10.0,

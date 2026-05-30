@@ -107,6 +107,7 @@ class GamesController extends Controller
                         'tier' => $detector->getTier(),
                         'weight' => $detector->getWeight($context),
                         'context' => $context,
+                        'detector' => $detector,
                     ];
                 }
             }
@@ -143,7 +144,7 @@ class GamesController extends Controller
                         'narrative' => [
                             'slug' => $option['slug'],
                             'text' => $text,
-                            'value' => $this->formatNarrativeValue($option['slug'], $option['context']),
+                            'value' => $option['detector']->getValue($option['context']),
                         ],
                     ];
                 }
@@ -151,17 +152,6 @@ class GamesController extends Controller
 
             return PlayerKeyPerformanceResource::collection($results);
         });
-    }
-
-    private function formatNarrativeValue(string $slug, PlayerNarrativeContext $context): string
-    {
-        return match ($slug) {
-            'lone_atlas', 'difference_maker', 'glue_guy', 'sinkhole', 'spark_plug', 'unsung_hero' => number_format($context->impPerStart, 1) . ' IMP',
-            'empty_stats', 'triple_double' => $context->points . ' PTS',
-            'carried_to_victory', 'cardio_session' => round($context->playedSeconds / 60) . ' MIN',
-            'ice_cold' => (int) ($context->fieldGoalsPercentage * 100) . '% FG',
-            default => number_format($context->impPerStart, 1) . ' IMP',
-        };
     }
 
     /**

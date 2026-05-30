@@ -65,6 +65,16 @@ class TripleDoubleDetectorTest extends TestCase
         $this->assertFalse($this->detector->isDetected($context));
     }
 
+    public function test_it_returns_correct_value()
+    {
+        $context = $this->createContext([
+            'points' => 12,
+            'rebounds' => 10,
+            'assists' => 11,
+        ]);
+        $this->assertEquals('12 PTS', $this->detector->getValue($context));
+    }
+
     private function createContext(array $overrides): PlayerNarrativeContext
     {
         return new PlayerNarrativeContext(
@@ -77,6 +87,7 @@ class TripleDoubleDetectorTest extends TestCase
             playedSeconds: $overrides['playedSeconds'] ?? 1800,
             plusMinus: $overrides['plusMinus'] ?? 0,
             impPerStart: $overrides['impPerStart'] ?? 0.0,
+            fieldGoalsPercentage: 0.0,
             teamWon: $overrides['teamWon'] ?? true,
             teamAverageGameImpPerStart: $overrides['teamAverageGameImpPerStart'] ?? 0.0,
             maxGameImp: $overrides['maxGameImp'] ?? 0.0,

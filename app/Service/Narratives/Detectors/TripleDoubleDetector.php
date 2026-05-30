@@ -16,7 +16,22 @@ class TripleDoubleDetector implements NarrativeDetector
         if ($context->steals >= 10) $categories++;
         if ($context->blocks >= 10) $categories++;
 
-        return $categories > 3;
+        return $categories >= 3;
+    }
+
+    public function getValue(PlayerNarrativeContext $context): string
+    {
+        $stats = [
+            $context->points . ' PTS' => $context->points,
+            $context->rebounds . ' REB' => $context->rebounds,
+            $context->assists . ' AST' => $context->assists,
+            $context->steals . ' STL' => $context->steals,
+            $context->blocks . ' BLK' => $context->blocks,
+        ];
+
+        arsort($stats);
+
+        return (string) array_key_first($stats);
     }
 
     public function getWeight(PlayerNarrativeContext $context): float

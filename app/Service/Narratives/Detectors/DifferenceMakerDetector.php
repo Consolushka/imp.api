@@ -11,7 +11,15 @@ class DifferenceMakerDetector implements NarrativeDetector
     {
         return $context->teamWon 
             && $context->impPerStart > $context->teamAverageGameImpPerStart
-            && $context->points >= $context->maxGamePoints * 0.7;
+            && (
+                $context->points >= $context->maxGamePoints * 0.8 ||
+                $context->impPerStart >= $context->maxGameImp * 0.8
+            );
+    }
+
+    public function getValue(PlayerNarrativeContext $context): string
+    {
+        return number_format($context->impPerStart, 1) . ' IMP';
     }
 
     public function getWeight(PlayerNarrativeContext $context): float
