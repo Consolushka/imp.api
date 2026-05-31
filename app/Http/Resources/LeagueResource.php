@@ -16,7 +16,6 @@ class LeagueResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'alias' => $this->alias,
-            'order' => $this->order,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
