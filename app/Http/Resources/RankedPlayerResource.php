@@ -25,6 +25,7 @@ class RankedPlayerResource extends JsonResource
                 'full_name' => $this->resource->getPlayer()->full_name,
                 'birth_date_at' => $this->resource->getPlayer()->birth_date_at
             ],
+            'team_alias'  => $this->resource->getTeamAlias(),
             'games_count' => $this->resource->getGames(),
             'avg_imp'     => $this->resource->getAvgImp(),
         ];

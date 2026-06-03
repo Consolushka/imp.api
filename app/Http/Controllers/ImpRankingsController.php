@@ -8,6 +8,7 @@ use App\Http\Resources\RankedPlayerResource;
 use App\Models\Game;
 use App\Models\GameTeamPlayerStat;
 use App\Models\Player;
+use App\Models\Team;
 
 class ImpRankingsController
 {
@@ -16,36 +17,37 @@ class ImpRankingsController
         $gameIds = Game::query()
             ->where('tournament_id', $request->getTournamentId())
             ->get('id');
-        $playerStatIds = GameTeamPlayerStat::query()
+        $playerStatIdsQuery = GameTeamPlayerStat::query()
             ->whereIn('game_id', $gameIds);
         if ($request->getTeamId()) {
-            $playerStatIds->where('team_id', $request->getTeamId());
+            $playerStatIdsQuery->where('team_id', $request->getTeamId());
         }
         if ($request->getMinMinutes()) {
-            $playerStatIds->where('played_seconds', '>=', $request->getMinMinutes() * 60);
+            $playerStatIdsQuery->where('played_seconds', '>=', $request->getMinMinutes() * 60);
         }
         if ($request->getMaxMinutes()) {
-            $playerStatIds->where('played_seconds', '<=', $request->getMaxMinutes() * 60);
+            $playerStatIdsQuery->where('played_seconds', '<=', $request->getMaxMinutes() * 60);
         }
-        $playerStatIds = $playerStatIds->get(['player_id', 'id'])
-            ->groupBy('id')->toArray();
+        $playerStatRows = $playerStatIdsQuery->get(['player_id', 'team_id', 'id'])
+            ->keyBy('id')->toArray();
 
-        $playerImpsByPlayerId = [];
+        $playerImpsByCompositeKey = [];
 
         try {
             // todo: оптимизировать что бы сразу брать всю стату
-            $imps = (new ImpController())->calcImpForStatIds(array_keys($playerStatIds), [$request->getPer()], $request->useReliability());
+            $imps = (new ImpController())->calcImpForStatIds(array_keys($playerStatRows), [$request->getPer()], $request->useReliability());
         } catch (\InvalidArgumentException $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'An error occurred during IMP calculation: ' . $e->getMessage()], 400);
         }
 
-        foreach ($playerStatIds as $playerId => $playerStat) {
-            $playerImpsByPlayerId[$playerStat[0]['player_id']][] = $imps[$playerId][$request->getPer()]->imp;
+        foreach ($playerStatRows as $statId => $playerStat) {
+            $compositeKey = $playerStat['player_id'] . '_' . $playerStat['team_id'];
+            $playerImpsByCompositeKey[$compositeKey][] = $imps[$statId][$request->getPer()]->imp;
         }
 
-        uasort($playerImpsByPlayerId, function ($a, $b) use ($request) {
+        uasort($playerImpsByCompositeKey, function ($a, $b) use ($request) {
             if ($request->getOrder() === 'asc') {
                 return array_sum($a) / count($a) <=> array_sum($b) / count($b);
             } else {
@@ -53,18 +55,33 @@ class ImpRankingsController
             }
         });
 
-        $playerImpsByPlayerId = array_filter($playerImpsByPlayerId, function ($item) use ($request) {
+        $playerImpsByCompositeKey = array_filter($playerImpsByCompositeKey, function ($item) use ($request) {
             return count($item) >= $request->getMinGames();
         });
 
+        $playerImpsByCompositeKey = array_slice($playerImpsByCompositeKey, 0, $request->getLimit(), true);
+
         $position = 1;
         $leaderboard = [];
-        $playerModels = Player::query()->whereIn('id', array_keys($playerImpsByPlayerId))->get()->groupBy('id');
-        foreach (array_slice($playerImpsByPlayerId, 0, $request->getLimit(), true) as $playerId => $imps) {
+
+        $playerIds = [];
+        $teamIds = [];
+        foreach (array_keys($playerImpsByCompositeKey) as $compositeKey) {
+            [$playerId, $teamId] = explode('_', $compositeKey);
+            $playerIds[] = $playerId;
+            $teamIds[] = $teamId;
+        }
+
+        $playerModels = Player::query()->whereIn('id', array_unique($playerIds))->get()->keyBy('id');
+        $teamModels = Team::query()->whereIn('id', array_unique($teamIds))->get()->keyBy('id');
+
+        foreach ($playerImpsByCompositeKey as $compositeKey => $imps) {
+            [$playerId, $teamId] = explode('_', $compositeKey);
             $leaderboard[] = new RankedPlayerDto(
                 $position++,
-                $playerId,
-                $playerModels[$playerId][0],
+                (int)$playerId,
+                $playerModels[$playerId],
+                $teamModels[$teamId]->alias ?? '',
                 count($imps),
                 array_sum($imps) / count($imps)
             );
