@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\SummaryResource;
 use App\Models\Game;
 use App\Models\GameTeamPlayerStat;
 use App\Models\League;
@@ -11,9 +12,12 @@ use Illuminate\Support\Facades\Cache;
 
 class SummaryController extends Controller
 {
+    /**
+     * @return SummaryResource
+     */
     public function index()
     {
-        return Cache::remember('summary_stats', now()->addWeek(), function () {
+        $data = Cache::remember('summary_stats', now()->addWeek(), function () {
             return [
                 'totalDataPoints' => $this->formatLargeNumber(GameTeamPlayerStat::count(), true),
                 'activeLeagues'   => League::count(),
@@ -21,6 +25,8 @@ class SummaryController extends Controller
                 'totalMatches'    => number_format(Game::count()),
             ];
         });
+
+        return new SummaryResource($data);
     }
 
     private function formatLargeNumber(int $number, bool $plus = false): string

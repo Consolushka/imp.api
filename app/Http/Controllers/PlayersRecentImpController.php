@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class PlayersRecentImpController extends Controller
 {
+    /**
+     * @param PlayersRecentImpRequest $request
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection<PlayersRecentImpResource>
+     */
     public function index(PlayersRecentImpRequest $request)
     {
         $playerIds = $request->getPlayerIds();
@@ -87,11 +91,11 @@ class PlayersRecentImpController extends Controller
             ];
         }
 
-        return [
-            'data' => PlayersRecentImpResource::collection($data),
-            'meta' => [
-                'per' => $request->getPer(),
-            ],
-        ];
+        return PlayersRecentImpResource::collection($data)
+            ->additional([
+                'meta' => [
+                    'per' => $request->getPer(),
+                ],
+            ]);
     }
 }

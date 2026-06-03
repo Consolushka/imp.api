@@ -22,7 +22,7 @@ class PlayerOfTheDayResource extends JsonResource
             'id'             => $this->resource->id,
             'full_name'      => $this->resource->fullName,
             'team_alias'     => $this->resource->teamAlias,
-            'played_seconds' => $this->resource->playedSeconds,
+            'played_minutes' => round($this->resource->playedSeconds / 60, 1),
             'pts'            => $this->resource->pts,
             'reb'            => $this->resource->reb,
             'ast'            => $this->resource->ast,

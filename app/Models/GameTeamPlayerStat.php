@@ -13,12 +13,13 @@ use Carbon\Carbon;
  * @property int $player_id
  * @property int $played_seconds
  * @property int $plus_minus
- * @property int points
+ * @property int $points
  * @property int $rebounds
  * @property int $assists
  * @property int $steals
  * @property int $blocks
  * @property int $turnovers
+ * @property float|null $imp
  * @property Carbon $created_at
  * @property Carbon $updated_at
 */
