@@ -25,6 +25,8 @@ Route::resource('leagues.tournaments', LeagueTournamentsController::class)->only
 ]);
 
 Route::get('tournaments/summary', [TournamentsController::class, 'summary']);
+Route::get('tournaments/weekly-leaders', [TournamentsController::class, 'weeklyLeaders']);
+Route::get('tournaments/{id}/players-of-the-day', [TournamentsController::class, 'playersOfTheDay']);
 Route::resource('tournaments', TournamentsController::class)->only([
     'index', 'show'
 ]);
@@ -37,6 +39,7 @@ Route::resource('tournaments.teams', TournamentTeamsController::class)->only([
     'index'
 ]);
 
+Route::get('games/search', [GamesController::class, 'search']);
 Route::resource('games', GamesController::class)->only([
     'index', 'show'
 ]);
