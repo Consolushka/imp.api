@@ -29,5 +29,8 @@ fi
 php artisan config:cache
 php artisan route:cache
 
+# Запускаем фоновый воркер очередей
+nohup php artisan queue:work --tries=3 --timeout=90 > /var/www/html/storage/logs/worker.log 2>&1 &
+
 # Запускаем Apache
 exec apache2-foreground
