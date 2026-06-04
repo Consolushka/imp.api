@@ -58,6 +58,9 @@ WORKDIR /var/www/html
 COPY dockerfiles/dockhost/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Копируем кастомный php.ini
+COPY dockerfiles/dockhost/php/php.ini /usr/local/etc/php/conf.d/custom.ini
+
 # Копируем composer файлы и устанавливаем зависимости
 COPY composer.json composer.lock ./
 RUN composer install --no-scripts --no-autoloader --optimize-autoloader --no-dev
