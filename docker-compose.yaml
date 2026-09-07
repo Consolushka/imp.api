@@ -5,6 +5,7 @@ services:
   app:
     build:
       context: dockerfiles
+      dockerfile: dev/Dockerfile
       target: dev
     container_name: app
     restart: unless-stopped
