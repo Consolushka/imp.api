@@ -34,7 +34,11 @@ class Game extends Model
 
     public function gameTeamStats(): HasMany
     {
-        return $this->hasMany(GameTeamStat::class);
+        // Хозяин площадки в БД не хранится. Argus всегда сохраняет статистику хозяев раньше гостей,
+        // поэтому хозяин — строка с наименьшим id внутри игры. См. инвариант в контракте db-schema.
+        // ponytail: неявный контракт на порядок вставки; надёжнее — колонка game_team_stats.is_home на стороне Argus.
+        return $this->hasMany(GameTeamStat::class)
+            ->selectRaw('game_team_stats.*, game_team_stats.id = (select min(id) from game_team_stats s where s.game_id = game_team_stats.game_id) as is_home');
     }
 
     public function gameTeamPlayerStats(): HasMany

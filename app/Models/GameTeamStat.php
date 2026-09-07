@@ -20,6 +20,7 @@ class GameTeamStat extends Model
     protected $casts = [
         'score' => 'integer',
         'final_differential' => 'integer',
+        'is_home' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

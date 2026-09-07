@@ -18,6 +18,7 @@ class GameTeamStatResource extends JsonResource
             'team_id' => $this->team_id,
             'score' => $this->score,
             'final_differential' => $this->final_differential,
+            'is_home' => $this->is_home,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
             'team' => new TeamResource($this->whenLoaded('team')),
