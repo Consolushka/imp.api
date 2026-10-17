@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Infrastructure\ImpCalculator\ImpCalculatorConnector;
 use App\Service\Narratives\DailyDetectors\AssistMaestroDetector;
 use App\Service\Narratives\DailyDetectors\DailyMvpDetector;
 use App\Service\Narratives\DailyDetectors\DailyScoringChampDetector;
@@ -29,7 +28,6 @@ use App\Service\Narratives\Detectors\SparkPlugDetector;
 use App\Service\Narratives\Detectors\TripleDoubleDetector;
 use App\Service\Narratives\Detectors\UnsungHeroDetector;
 use App\Service\Narratives\NarrativeEngine;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -39,8 +37,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        App::bind(ImpCalculatorConnector::class, fn() => new ImpCalculatorConnector(config('services.imp_calculator.url')));
-
         $this->app->tag([
             DifferenceMakerDetector::class,
             LoneAtlasDetector::class,
