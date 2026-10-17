@@ -21,4 +21,9 @@ final class TournamentCacheKeys
 
         return "tournament_{$tournamentId}_players_of_the_day_limit_{$limit}_rel_{$rel}_date_{$date}";
     }
+
+    public static function dailyInsights(int $tournamentId, string $date): string
+    {
+        return "tournament_{$tournamentId}_daily_insights_{$date}";
+    }
 }

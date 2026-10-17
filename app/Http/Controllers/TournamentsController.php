@@ -64,9 +64,9 @@ class TournamentsController extends Controller
         $date = $request->has('date') ? Carbon::parse($request->get('date')) : now();
         $dateStr = $date->toDateString();
 
-        $cacheKey = "tournament_{$id}_daily_insights_{$dateStr}";
+        $cacheKey = TournamentCacheKeys::dailyInsights($id, $dateStr);
 
-        return Cache::remember($cacheKey, now()->endOfDay(), function () use ($id, $date, $engine) {
+        return Cache::remember($cacheKey, now()->timezone('UTC')->endOfDay(), function () use ($id, $date, $engine) {
             $context = $this->tournamentService->getDailyContext($id, $date);
 
             return $engine->analyze($context);

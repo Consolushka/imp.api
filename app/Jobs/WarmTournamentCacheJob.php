@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Http\Resources\PlayerOfTheDayResource;
 use App\Http\Resources\WeeklyLeaderResource;
 use App\Models\Tournament;
+use App\Service\Narratives\DailyInsightEngine;
 use App\Service\Tournament\TournamentCacheKeys;
 use App\Service\Tournament\TournamentService;
 use App\Service\Tournament\WeeklyLeadersService;
@@ -31,7 +32,8 @@ class WarmTournamentCacheJob implements ShouldQueue
      */
     public function handle(
         WeeklyLeadersService $weeklyLeadersService,
-        TournamentService $tournamentService
+        TournamentService $tournamentService,
+        DailyInsightEngine $dailyInsightEngine
     ): void {
         $tournament = Tournament::find($this->tournamentId);
         if (!$tournament) {
@@ -54,5 +56,9 @@ class WarmTournamentCacheJob implements ShouldQueue
         $playersOfTheDay = $tournamentService->calculatePlayersOfTheDay($this->tournamentId, $referenceDate, 5, true);
         $playersOfTheDayResource = PlayerOfTheDayResource::collection($playersOfTheDay);
         Cache::put(TournamentCacheKeys::playersOfTheDay($this->tournamentId, 5, true, $dateStr), $playersOfTheDayResource, now()->timezone('UTC')->endOfDay());
+
+        // 4. Warm Daily Insights (End of day UTC)
+        $insights = $dailyInsightEngine->analyze($tournamentService->getDailyContext($this->tournamentId, $referenceDate));
+        Cache::put(TournamentCacheKeys::dailyInsights($this->tournamentId, $dateStr), $insights, now()->timezone('UTC')->endOfDay());
     }
 }
