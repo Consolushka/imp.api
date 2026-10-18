@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -32,6 +33,12 @@ class Tournament extends Model
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+    // Пустая дата окончания значит, что Argus её не знает — такой турнир считаем идущим.
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $q) => $q->whereNull('end_at')->orWhere('end_at', '>=', now()));
+    }
 
     public function league(): BelongsTo
     {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Dtos\PlayerOfTheDayDto;
+use App\Http\Requests\TournamentsListRequest;
 use App\Http\Resources\PlayerOfTheDayResource;
 use App\Http\Resources\TournamentResource;
 use App\Http\Resources\TournamentSummaryResource;
@@ -32,9 +33,13 @@ class TournamentsController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(TournamentsListRequest $request): AnonymousResourceCollection
     {
-        return TournamentResource::collection(Tournament::all());
+        $tournaments = Tournament::query()
+            ->unless($request->includeFinished(), fn ($query) => $query->active())
+            ->get();
+
+        return TournamentResource::collection($tournaments);
     }
 
     /**
