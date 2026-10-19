@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Dtos\PlayerOfTheDayDto;
+use App\Http\Requests\TournamentsListRequest;
 use App\Http\Resources\PlayerOfTheDayResource;
 use App\Http\Resources\TournamentResource;
 use App\Http\Resources\TournamentSummaryResource;
@@ -14,6 +15,7 @@ use App\Models\Player;
 use App\Models\Tournament;
 use App\Service\Imp\ImpService;
 use App\Service\Narratives\DailyInsightEngine;
+use App\Service\Tournament\TournamentCacheKeys;
 use App\Service\Tournament\TournamentService;
 use App\Service\Tournament\WeeklyLeadersService;
 use Carbon\Carbon;
@@ -32,9 +34,13 @@ class TournamentsController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): AnonymousResourceCollection
+    public function index(TournamentsListRequest $request): AnonymousResourceCollection
     {
-        return TournamentResource::collection(Tournament::all());
+        $tournaments = Tournament::query()
+            ->unless($request->includeFinished(), fn ($query) => $query->active())
+            ->get();
+
+        return TournamentResource::collection($tournaments);
     }
 
     /**
@@ -46,11 +52,10 @@ class TournamentsController extends Controller
     {
         $limit = (int)$request->get('limit', 5);
         $useReliability = filter_var($request->get('use_reliability', true), FILTER_VALIDATE_BOOLEAN);
-        $relInt = $useReliability ? 1 : 0;
         $date = $request->has('date') ? Carbon::parse($request->get('date')) : now();
         $dateStr = $date->toDateString();
 
-        $cacheKey = "tournament_{$id}_players_of_the_day_limit_{$limit}_rel_{$relInt}_date_{$dateStr}";
+        $cacheKey = TournamentCacheKeys::playersOfTheDay($id, $limit, $useReliability, $dateStr);
 
         return Cache::remember($cacheKey, now()->timezone('UTC')->endOfDay(), function () use ($id, $limit, $useReliability, $date) {
             $playersOfTheDay = $this->tournamentService->calculatePlayersOfTheDay($id, $date, $limit, $useReliability);
@@ -64,9 +69,9 @@ class TournamentsController extends Controller
         $date = $request->has('date') ? Carbon::parse($request->get('date')) : now();
         $dateStr = $date->toDateString();
 
-        $cacheKey = "tournament_{$id}_daily_insights_{$dateStr}";
+        $cacheKey = TournamentCacheKeys::dailyInsights($id, $dateStr);
 
-        return Cache::remember($cacheKey, now()->endOfDay(), function () use ($id, $date, $engine) {
+        return Cache::remember($cacheKey, now()->timezone('UTC')->endOfDay(), function () use ($id, $date, $engine) {
             $context = $this->tournamentService->getDailyContext($id, $date);
 
             return $engine->analyze($context);
@@ -93,7 +98,7 @@ class TournamentsController extends Controller
 
         foreach ($tournaments as $tournament) {
             $tournament->best_player_full_name = Cache::remember(
-                "tournament_{$tournament->id}_best_player",
+                TournamentCacheKeys::bestPlayer($tournament->id),
                 now()->addDay(),
                 fn() => $this->tournamentService->getBestPlayerFullName($tournament)
             );
@@ -117,7 +122,7 @@ class TournamentsController extends Controller
         $referenceDate = $request->has('date') ? Carbon::parse($request->get('date')) : now();
         $dateStr = $referenceDate->toDateString();
 
-        $cacheKey = "tournament_{$id}_weekly_leaders_{$dateStr}";
+        $cacheKey = TournamentCacheKeys::weeklyLeaders($id, $dateStr);
 
         return Cache::remember($cacheKey, now()->timezone('UTC')->endOfDay(), function () use ($id, $referenceDate, $weeklyLeadersService) {
             $leaders = $weeklyLeadersService->calculateLeaders($id, $referenceDate);

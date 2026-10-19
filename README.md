@@ -5,7 +5,7 @@ A high-performance Laravel-based dashboard for calculating and visualizing **Int
 ## 🚀 Key Features
 
 - **Dynamic IMP Calculation:** Real-time calculation of player efficiency based on plus/minus, game duration, and final scores.
-- **Reliability Scoring:** Advanced quadratic formula for evaluating statistical confidence based on playing time.
+- **Reliability Scoring:** Smoothstep growth with a slow decay for evaluating statistical confidence based on playing time.
 - **Multi-League Support:** Built-in logic for both 40-minute (FIBA) and 48-minute (NBA) match formats.
 - **RESTful API:** Protected endpoints for batch processing and raw data calculations.
 - **Dockerized Environment:** One-command setup for development and production.
@@ -68,10 +68,11 @@ The project follows a modern, service-oriented architecture:
 
 ## 📊 IMP Logic & Reliability
 
-The **Reliability Score** uses a quadratic formula to penalize low playing time:
-$$R = \frac{x^2}{x^2 + k^2}$$
-- **FIBA (40 min):** $k = 15$
-- **NBA (48 min):** $k = 18$
+The **Reliability Score** grows along a smoothstep curve up to a peak and then decays slowly:
+$$R = 3t^2 - 2t^3,\quad t = \frac{minutes}{peak} \quad (minutes \le peak)$$
+$$R = e^{-0.005\,(minutes - peak)} \quad (minutes > peak)$$
+- **FIBA (40 min base):** peak = 30 min
+- **NBA (48 min base):** peak = 36 min
 
 This ensures that "noise" from players with very low minutes is minimized in the overall rankings.
 

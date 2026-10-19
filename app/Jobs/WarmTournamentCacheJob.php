@@ -5,7 +5,8 @@ namespace App\Jobs;
 use App\Http\Resources\PlayerOfTheDayResource;
 use App\Http\Resources\WeeklyLeaderResource;
 use App\Models\Tournament;
-use App\Service\Tournament\RankingService;
+use App\Service\Narratives\DailyInsightEngine;
+use App\Service\Tournament\TournamentCacheKeys;
 use App\Service\Tournament\TournamentService;
 use App\Service\Tournament\WeeklyLeadersService;
 use Illuminate\Bus\Queueable;
@@ -31,7 +32,8 @@ class WarmTournamentCacheJob implements ShouldQueue
      */
     public function handle(
         WeeklyLeadersService $weeklyLeadersService,
-        TournamentService $tournamentService
+        TournamentService $tournamentService,
+        DailyInsightEngine $dailyInsightEngine
     ): void {
         $tournament = Tournament::find($this->tournamentId);
         if (!$tournament) {
@@ -40,19 +42,23 @@ class WarmTournamentCacheJob implements ShouldQueue
 
         // 1. Warm Best Player (24h)
         $bestPlayer = $tournamentService->getBestPlayerFullName($tournament);
-        Cache::put("tournament_{$this->tournamentId}_best_player", $bestPlayer, now()->addDay());
+        Cache::put(TournamentCacheKeys::bestPlayer($this->tournamentId), $bestPlayer, now()->addDay());
 
         // 2. Warm Weekly Leaders (End of day UTC)
         $referenceDate = now();
         $dateStr = $referenceDate->toDateString();
         $leaders = $weeklyLeadersService->calculateLeaders($this->tournamentId, $referenceDate);
         $leadersResource = WeeklyLeaderResource::collection($leaders);
-        Cache::put("tournament_{$this->tournamentId}_weekly_leaders_{$dateStr}", $leadersResource, now()->timezone('UTC')->endOfDay());
+        Cache::put(TournamentCacheKeys::weeklyLeaders($this->tournamentId, $dateStr), $leadersResource, now()->timezone('UTC')->endOfDay());
 
         // 3. Warm Players of the Day (End of day UTC)
         // We warm with default parameters: limit=5, use_reliability=true
         $playersOfTheDay = $tournamentService->calculatePlayersOfTheDay($this->tournamentId, $referenceDate, 5, true);
         $playersOfTheDayResource = PlayerOfTheDayResource::collection($playersOfTheDay);
-        Cache::put("tournament_{$this->tournamentId}_players_of_the_day_limit_5_rel_1_date_{$dateStr}", $playersOfTheDayResource, now()->timezone('UTC')->endOfDay());
+        Cache::put(TournamentCacheKeys::playersOfTheDay($this->tournamentId, 5, true, $dateStr), $playersOfTheDayResource, now()->timezone('UTC')->endOfDay());
+
+        // 4. Warm Daily Insights (End of day UTC)
+        $insights = $dailyInsightEngine->analyze($tournamentService->getDailyContext($this->tournamentId, $referenceDate));
+        Cache::put(TournamentCacheKeys::dailyInsights($this->tournamentId, $dateStr), $insights, now()->timezone('UTC')->endOfDay());
     }
 }

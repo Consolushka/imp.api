@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\GameResource;
 use App\Http\Resources\PlayerKeyPerformanceResource;
+use App\Http\Requests\GameShowRequest;
 use App\Http\Requests\GamesListRequest;
 use App\Models\Game;
 use App\Models\GameTeamPlayerStat;
@@ -205,15 +206,15 @@ class GamesController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Request $request, int $id)
+    public function show(GameShowRequest $request, int $id)
     {
         $game = Game::query()
             ->with(['gameTeamStats', 'gameTeamStats.team'])
             ->where('id', $id)
             ->firstOrFail();
 
-        $per = PersEnum::tryFrom($request->get('per')) ?: PersEnum::FullGame;
-        $useReliability = filter_var($request->get('reliability', true), FILTER_VALIDATE_BOOLEAN);
+        $per = $request->per();
+        $useReliability = $request->useReliability();
         $gameDuration = $game->duration ?: 40;
 
         /**@var GameTeamPlayerStat[] $playersStatsInGame*/

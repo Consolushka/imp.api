@@ -9,8 +9,6 @@ services:
       target: dev
     container_name: app
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
       - PHP_IDE_CONFIG=serverName=imp.dashboard.local
     working_dir: /var/www
