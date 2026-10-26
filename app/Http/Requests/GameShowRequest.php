@@ -24,11 +24,6 @@ class GameShowRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        // ponytail: старое имя параметра принимаем, пока dashboard не перешёл на use_reliability (VUE-5); убрать после её релиза.
-        if (! $this->has('use_reliability') && $this->has('reliability')) {
-            $this->merge(['use_reliability' => $this->input('reliability')]);
-        }
-
         if ($this->has('use_reliability')) {
             $this->merge([
                 'use_reliability' => filter_var($this->input('use_reliability'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
