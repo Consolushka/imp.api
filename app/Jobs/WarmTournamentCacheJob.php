@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Http\Resources\PlayerOfTheDayResource;
 use App\Http\Resources\WeeklyLeaderResource;
 use App\Models\Tournament;
 use App\Service\Narratives\DailyInsightEngine;
@@ -51,14 +50,15 @@ class WarmTournamentCacheJob implements ShouldQueue
         $leadersResource = WeeklyLeaderResource::collection($leaders);
         Cache::put(TournamentCacheKeys::weeklyLeaders($this->tournamentId, $dateStr), $leadersResource, now()->timezone('UTC')->endOfDay());
 
-        // 3. Warm Players of the Day (End of day UTC)
-        // We warm with default parameters: limit=5, use_reliability=true
-        $playersOfTheDay = $tournamentService->calculatePlayersOfTheDay($this->tournamentId, $referenceDate, 5, true);
-        $playersOfTheDayResource = PlayerOfTheDayResource::collection($playersOfTheDay);
-        Cache::put(TournamentCacheKeys::playersOfTheDay($this->tournamentId, 5, true, $dateStr), $playersOfTheDayResource, now()->timezone('UTC')->endOfDay());
+        // 3–4. Игроки дня и инсайты — за последний игровой день, иначе греется не тот день, который отдаст эндпоинт.
+        // В кэш кладутся данные (DTO), ресурс из них собирает контроллер.
+        $gameDay = $tournamentService->lastGameDay($this->tournamentId);
+        $gameDayStr = $gameDay->toDateString();
 
-        // 4. Warm Daily Insights (End of day UTC)
-        $insights = $dailyInsightEngine->analyze($tournamentService->getDailyContext($this->tournamentId, $referenceDate));
-        Cache::put(TournamentCacheKeys::dailyInsights($this->tournamentId, $dateStr), $insights, now()->timezone('UTC')->endOfDay());
+        $playersOfTheDay = $tournamentService->calculatePlayersOfTheDay($this->tournamentId, $gameDay, 5, true);
+        Cache::put(TournamentCacheKeys::playersOfTheDay($this->tournamentId, 5, true, $gameDayStr), $playersOfTheDay, now()->timezone('UTC')->endOfDay());
+
+        $insights = $dailyInsightEngine->analyze($tournamentService->getDailyContext($this->tournamentId, $gameDay));
+        Cache::put(TournamentCacheKeys::dailyInsights($this->tournamentId, $gameDayStr), $insights, now()->timezone('UTC')->endOfDay());
     }
 }
