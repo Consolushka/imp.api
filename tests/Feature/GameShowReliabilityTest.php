@@ -83,14 +83,10 @@ class GameShowReliabilityTest extends TestCase
         $this->assertImp("/api/games/{$this->gameId}?use_reliability=false", $this->expectedImp(false));
     }
 
-    public function test_legacy_reliability_param_is_still_accepted(): void
+    public function test_legacy_reliability_param_is_ignored(): void
     {
-        $this->assertImp("/api/games/{$this->gameId}?reliability=false", $this->expectedImp(false));
-    }
-
-    public function test_use_reliability_wins_over_legacy_param(): void
-    {
-        $this->assertImp("/api/games/{$this->gameId}?use_reliability=true&reliability=false", $this->expectedImp(true));
+        // Старое имя параметра больше не поддерживается: запрос считается как без параметра, то есть с надёжностью.
+        $this->assertImp("/api/games/{$this->gameId}?reliability=false", $this->expectedImp(true));
     }
 
     public function test_invalid_use_reliability_is_rejected(): void
