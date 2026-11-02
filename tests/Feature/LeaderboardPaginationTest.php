@@ -24,16 +24,16 @@ class LeaderboardPaginationTest extends TestCase
         DB::table('tournaments')->insert(['id' => 1]);
     }
 
-    private function mockRanking(int $players = 25): void
+    private function mockRanking(int $calculations = 1): void
     {
         $leaderboard = array_map(
             fn (int $position) => new RankedPlayerDto($position, $position, new Player, 'TEAM', 5, 10.0, 1200),
-            range(1, $players)
+            range(1, 25)
         );
 
         $this->mock(RankingService::class)
             ->shouldReceive('calculate')
-            ->once()
+            ->times($calculations)
             ->andReturn($leaderboard);
     }
 
@@ -82,5 +82,27 @@ class LeaderboardPaginationTest extends TestCase
         $this->assertSame(range(1, 10), $this->positions('&limit=10&page=1'));
         $this->assertSame(range(11, 20), $this->positions('&limit=10&page=2'));
         $this->assertSame(range(6, 10), $this->positions('&limit=5&page=2'));
+    }
+
+    public function test_different_filters_do_not_share_a_calculation(): void
+    {
+        $this->mockRanking(calculations: 2);
+
+        $this->positions('&order=asc');
+        $this->positions('&order=desc');
+    }
+
+    public function test_last_page_can_be_partial(): void
+    {
+        $this->mockRanking();
+
+        $this->assertSame(range(21, 25), $this->positions('&limit=10&page=3'));
+    }
+
+    public function test_page_without_limit_uses_default_limit(): void
+    {
+        $this->mockRanking();
+
+        $this->assertSame(range(11, 20), $this->positions('&page=2'));
     }
 }
