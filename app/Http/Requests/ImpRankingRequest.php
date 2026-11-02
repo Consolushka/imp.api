@@ -30,6 +30,11 @@ class ImpRankingRequest extends FormRequest
         return $this->validated()['limit'] ?? 10;
     }
 
+    public function getPage(): int
+    {
+        return $this->validated()['page'] ?? 1;
+    }
+
     public function getOrder(): string
     {
         return $this->validated()['order'] ?? 'desc';
@@ -83,6 +88,7 @@ class ImpRankingRequest extends FormRequest
             'tournament_id'   => 'required|exists:tournaments,id',
             'per'             => 'required|in:' . implode(',', PersEnum::stringCases()),
             'limit'           => 'integer|min:1|max:100',
+            'page'            => 'integer|min:1',
             'order'           => 'in:asc,desc',
             'min_games'       => 'integer|min:1',
             'team_id'         => 'exists:teams,id',
