@@ -19,6 +19,19 @@ class TournamentService
         private readonly ImpService $impService
     ) {}
 
+    /**
+     * День последней уже начавшейся игры турнира; игр нет — сегодня.
+     * Единая точка для контроллеров и прогрева кэша: иначе джоба греет не тот день, который отдаст эндпоинт.
+     */
+    public function lastGameDay(int $tournamentId): Carbon
+    {
+        $lastScheduledAt = Game::where('tournament_id', $tournamentId)
+            ->where('scheduled_at', '<=', now())
+            ->max('scheduled_at');
+
+        return $lastScheduledAt ? Carbon::parse($lastScheduledAt) : now();
+    }
+
     public function getDailyContext(int $tournamentId, Carbon $date): DailyContext
     {
         $games = Game::with(['gameTeamStats'])

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Dtos\PlayerOfTheDayDto;
 use App\Http\Requests\TournamentsListRequest;
+use App\Http\Resources\DailyInsightResource;
 use App\Http\Resources\PlayerOfTheDayResource;
 use App\Http\Resources\TournamentResource;
 use App\Http\Resources\TournamentSummaryResource;
@@ -43,39 +44,35 @@ class TournamentsController extends Controller
         return TournamentResource::collection($tournaments);
     }
 
-    /**
-     * @param Request $request
-     * @param int $id
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection<PlayerOfTheDayResource>
-     */
     public function playersOfTheDay(Request $request, int $id)
     {
         $limit = (int)$request->get('limit', 5);
         $useReliability = filter_var($request->get('use_reliability', true), FILTER_VALIDATE_BOOLEAN);
-        $date = $request->has('date') ? Carbon::parse($request->get('date')) : now();
+        $date = $request->has('date') ? Carbon::parse($request->get('date')) : $this->tournamentService->lastGameDay($id);
         $dateStr = $date->toDateString();
 
         $cacheKey = TournamentCacheKeys::playersOfTheDay($id, $limit, $useReliability, $dateStr);
 
-        return Cache::remember($cacheKey, now()->timezone('UTC')->endOfDay(), function () use ($id, $limit, $useReliability, $date) {
-            $playersOfTheDay = $this->tournamentService->calculatePlayersOfTheDay($id, $date, $limit, $useReliability);
-
-            return PlayerOfTheDayResource::collection($playersOfTheDay);
+        // В кэше лежат данные, а не ресурс: так ответ (и его OpenAPI-схема) собирается в одном месте, а джоба прогрева не обязана знать форму ответа.
+        $playersOfTheDay = Cache::remember($cacheKey, now()->timezone('UTC')->endOfDay(), function () use ($id, $limit, $useReliability, $date) {
+            return $this->tournamentService->calculatePlayersOfTheDay($id, $date, $limit, $useReliability);
         });
+
+        return PlayerOfTheDayResource::collection($playersOfTheDay)->additional(['date' => $dateStr]);
     }
 
     public function dailyInsights(Request $request, int $id, DailyInsightEngine $engine)
     {
-        $date = $request->has('date') ? Carbon::parse($request->get('date')) : now();
+        $date = $request->has('date') ? Carbon::parse($request->get('date')) : $this->tournamentService->lastGameDay($id);
         $dateStr = $date->toDateString();
 
         $cacheKey = TournamentCacheKeys::dailyInsights($id, $dateStr);
 
-        return Cache::remember($cacheKey, now()->timezone('UTC')->endOfDay(), function () use ($id, $date, $engine) {
-            $context = $this->tournamentService->getDailyContext($id, $date);
-
-            return $engine->analyze($context);
+        $insights = Cache::remember($cacheKey, now()->timezone('UTC')->endOfDay(), function () use ($id, $date, $engine) {
+            return $engine->analyze($this->tournamentService->getDailyContext($id, $date));
         });
+
+        return DailyInsightResource::collection($insights)->additional(['date' => $dateStr]);
     }
 
     public function summary(Request $request)
