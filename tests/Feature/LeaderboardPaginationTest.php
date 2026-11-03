@@ -84,12 +84,41 @@ class LeaderboardPaginationTest extends TestCase
         $this->assertSame(range(6, 10), $this->positions('&limit=5&page=2'));
     }
 
-    public function test_different_filters_do_not_share_a_calculation(): void
+    public function test_omitted_params_and_their_defaults_share_a_calculation(): void
     {
-        $this->mockRanking(calculations: 2);
+        $this->mockRanking();
 
-        $this->positions('&order=asc');
-        $this->positions('&order=desc');
+        $this->positions('');
+        $this->positions('&order=desc&min_games=1&use_reliability=1');
+    }
+
+    public function test_each_filter_gets_its_own_calculation(): void
+    {
+        Schema::create('teams', function ($table) {
+            $table->id();
+        });
+
+        DB::table('teams')->insert(['id' => 1]);
+        DB::table('tournaments')->insert(['id' => 2]);
+
+        $filters = [
+            '&tournament_id=2',
+            '&per=clean',
+            '&order=asc',
+            '&min_games=2',
+            '&team_id=1',
+            '&min_minutes=1',
+            '&avg_minutes=1',
+            '&use_reliability=0',
+        ];
+
+        $this->mockRanking(calculations: count($filters) + 1);
+
+        $this->positions('');
+
+        foreach ($filters as $filter) {
+            $this->positions($filter);
+        }
     }
 
     public function test_last_page_can_be_partial(): void

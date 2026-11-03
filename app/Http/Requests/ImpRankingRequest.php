@@ -66,6 +66,25 @@ class ImpRankingRequest extends FormRequest
     }
 
     /**
+     * Всё, от чего зависит рейтинг: по этим значениям его ищут в кеше. Умолчания уже применены,
+     * поэтому запрос без параметра и с его значением по умолчанию читают одну запись.
+     * Новый фильтр рейтинга обязательно добавлять сюда, иначе запросы с разными его значениями получат один рейтинг.
+     */
+    public function rankingFilters(): array
+    {
+        return [
+            'tournament_id' => $this->getTournamentId(),
+            'per' => $this->getPer(),
+            'order' => $this->getOrder(),
+            'min_games' => $this->getMinGames(),
+            'team_id' => $this->getTeamId(),
+            'min_minutes' => $this->getMinMinutes(),
+            'avg_minutes' => $this->getAvgMinutes(),
+            'use_reliability' => $this->useReliability(),
+        ];
+    }
+
+    /**
      * Handle boolean string values from GET request.
      */
     protected function prepareForValidation(): void

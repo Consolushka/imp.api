@@ -12,7 +12,7 @@ class ImpRankingsController
     public function index(ImpRankingRequest $request, RankingService $rankingService)
     {
         // Страницы — срезы одного рейтинга: иначе каждая считала бы его заново, а позиции могли бы разъехаться.
-        $cacheKey = 'leaderboard_'.md5(json_encode($request->safe()->except(['page', 'limit'])));
+        $cacheKey = 'leaderboard_'.md5(json_encode($request->rankingFilters()));
 
         $leaderboard = Cache::remember($cacheKey, now()->addDay(), function () use ($request, $rankingService) {
             return $rankingService->calculate($request);
