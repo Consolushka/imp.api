@@ -3,7 +3,7 @@
 namespace App\Service\Tournament;
 
 use App\Dtos\RankedPlayerDto;
-use App\Http\Requests\ImpRankingRequest;
+use App\Dtos\RankingFilters;
 use App\Models\Game;
 use App\Models\GameTeamPlayerStat;
 use App\Models\Player;
@@ -17,24 +17,24 @@ class RankingService
     ) {}
 
     /**
-     * @param ImpRankingRequest $request
+     * @param RankingFilters $filters
      * @return array<RankedPlayerDto>
      */
-    public function calculate(ImpRankingRequest $request): array
+    public function calculate(RankingFilters $filters): array
     {
         $gameIds = Game::query()
-            ->where('tournament_id', $request->getTournamentId())
+            ->where('tournament_id', $filters->tournamentId)
             ->pluck('id');
 
         $playerStatIdsQuery = GameTeamPlayerStat::query()
             ->whereIn('game_id', $gameIds);
 
-        if ($request->getTeamId()) {
-            $playerStatIdsQuery->where('team_id', $request->getTeamId());
+        if ($filters->teamId) {
+            $playerStatIdsQuery->where('team_id', $filters->teamId);
         }
 
-        if ($request->getMinMinutes()) {
-            $playerStatIdsQuery->where('played_seconds', '>=', $request->getMinMinutes() * 60);
+        if ($filters->minMinutes) {
+            $playerStatIdsQuery->where('played_seconds', '>=', $filters->minMinutes * 60);
         } else {
             $playerStatIdsQuery->where('played_seconds', '>', 0);
         }
@@ -48,32 +48,32 @@ class RankingService
 
         $imps = $this->impService->calcImpForStatIds(
             array_keys($playerStatRows),
-            [$request->getPer()],
-            $request->useReliability()
+            [$filters->per],
+            $filters->useReliability
         );
 
         foreach ($playerStatRows as $statId => $playerStat) {
             $compositeKey = $playerStat['player_id'] . '_' . $playerStat['team_id'];
-            $playerImpsByCompositeKey[$compositeKey][] = $imps[$statId][$request->getPer()]->imp;
+            $playerImpsByCompositeKey[$compositeKey][] = $imps[$statId][$filters->per]->imp;
             $playerSecondsByCompositeKey[$compositeKey][] = $playerStat['played_seconds'];
         }
 
-        $playerImpsByCompositeKey = array_filter($playerImpsByCompositeKey, function ($item) use ($request) {
-            return count($item) >= $request->getMinGames();
+        $playerImpsByCompositeKey = array_filter($playerImpsByCompositeKey, function ($item) use ($filters) {
+            return count($item) >= $filters->minGames;
         });
 
-        if ($request->getAvgMinutes()) {
-            $playerImpsByCompositeKey = array_filter($playerImpsByCompositeKey, function ($imps, $compositeKey) use ($request, $playerSecondsByCompositeKey) {
+        if ($filters->avgMinutes) {
+            $playerImpsByCompositeKey = array_filter($playerImpsByCompositeKey, function ($imps, $compositeKey) use ($filters, $playerSecondsByCompositeKey) {
                 $avgSeconds = array_sum($playerSecondsByCompositeKey[$compositeKey]) / count($imps);
-                return $avgSeconds >= ($request->getAvgMinutes() * 60);
+                return $avgSeconds >= ($filters->avgMinutes * 60);
             }, ARRAY_FILTER_USE_BOTH);
         }
 
-        uasort($playerImpsByCompositeKey, function ($a, $b) use ($request) {
+        uasort($playerImpsByCompositeKey, function ($a, $b) use ($filters) {
             $avgA = array_sum($a) / count($a);
             $avgB = array_sum($b) / count($b);
 
-            if ($request->getOrder() === 'asc') {
+            if ($filters->order === 'asc') {
                 return $avgA <=> $avgB;
             } else {
                 return $avgB <=> $avgA;

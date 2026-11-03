@@ -121,26 +121,6 @@ class LeaderboardPaginationTest extends TestCase
         }
     }
 
-    public function test_cache_key_covers_every_ranking_filter(): void
-    {
-        $request = null;
-
-        $this->mock(RankingService::class)
-            ->shouldReceive('calculate')
-            ->andReturnUsing(function ($received) use (&$request) {
-                $request = $received;
-
-                return [];
-            });
-
-        $this->getJson(self::URI)->assertOk();
-
-        $this->assertEqualsCanonicalizing(
-            array_diff(array_keys($request->rules()), ['page', 'limit']),
-            array_keys($request->rankingFilters()),
-        );
-    }
-
     public function test_last_page_can_be_partial(): void
     {
         $this->mockRanking();

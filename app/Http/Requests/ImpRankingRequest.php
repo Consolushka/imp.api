@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Dtos\RankingFilters;
 use App\Service\Imp\PersEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -65,23 +66,18 @@ class ImpRankingRequest extends FormRequest
         return (bool) ($this->validated()['use_reliability'] ?? true);
     }
 
-    /**
-     * Всё, от чего зависит рейтинг: по этим значениям его ищут в кеше. Умолчания уже применены,
-     * поэтому запрос без параметра и с его значением по умолчанию читают одну запись.
-     * Новый фильтр рейтинга обязательно добавлять сюда, иначе запросы с разными его значениями получат один рейтинг.
-     */
-    public function rankingFilters(): array
+    public function rankingFilters(): RankingFilters
     {
-        return [
-            'tournament_id' => $this->getTournamentId(),
-            'per' => $this->getPer(),
-            'order' => $this->getOrder(),
-            'min_games' => $this->getMinGames(),
-            'team_id' => $this->getTeamId(),
-            'min_minutes' => $this->getMinMinutes(),
-            'avg_minutes' => $this->getAvgMinutes(),
-            'use_reliability' => $this->useReliability(),
-        ];
+        return new RankingFilters(
+            tournamentId: $this->getTournamentId(),
+            per: $this->getPer(),
+            order: $this->getOrder(),
+            minGames: $this->getMinGames(),
+            teamId: $this->getTeamId(),
+            minMinutes: $this->getMinMinutes(),
+            avgMinutes: $this->getAvgMinutes(),
+            useReliability: $this->useReliability(),
+        );
     }
 
     /**
