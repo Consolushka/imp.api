@@ -48,7 +48,7 @@ class PlayerStatImpRequest extends FormRequest
     {
         return [
             'ids'             => 'required|array',
-            'ids.*'           => 'exists:game_team_player_stats,id',
+            'ids.*'           => 'integer|exists:game_team_player_stats,id',
             'pers'            => 'required|array',
             'pers.*'          => 'in:' . implode(',', PersEnum::stringCases()),
             'use_reliability' => 'boolean',

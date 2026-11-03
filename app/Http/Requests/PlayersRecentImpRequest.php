@@ -68,9 +68,9 @@ class PlayersRecentImpRequest extends FormRequest
     {
         return [
             'player_ids'      => 'required|array',
-            'player_ids.*'    => 'exists:players,id',
-            'tournament_id'   => 'required|exists:tournaments,id',
-            'team_id'         => 'exists:teams,id',
+            'player_ids.*'    => 'integer|exists:players,id',
+            'tournament_id'   => 'required|integer|exists:tournaments,id',
+            'team_id'         => 'integer|exists:teams,id',
             'per'             => 'required|in:' . implode(',', PersEnum::stringCases()),
             'offset'          => 'integer|min:0',
             'limit'           => 'integer|min:1|max:100',

@@ -104,13 +104,13 @@ class ImpRankingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'tournament_id'   => 'required|exists:tournaments,id',
+            'tournament_id'   => 'required|integer|exists:tournaments,id',
             'per'             => 'required|in:' . implode(',', PersEnum::stringCases()),
             'limit'           => 'integer|min:1|max:100',
             'page'            => 'integer|min:1',
             'order'           => 'in:asc,desc',
             'min_games'       => 'integer|min:1',
-            'team_id'         => 'exists:teams,id',
+            'team_id'         => 'integer|exists:teams,id',
             'min_minutes'     => 'integer|min:1',
             'avg_minutes'     => 'integer|min:1',
             'use_reliability' => 'boolean',
