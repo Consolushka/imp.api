@@ -54,7 +54,7 @@ class PlayersRecentImpRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        if ($this->has('use_reliability')) {
+        if ($this->filled('use_reliability')) {
             $this->merge([
                 'use_reliability' => filter_var($this->use_reliability, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
             ]);
