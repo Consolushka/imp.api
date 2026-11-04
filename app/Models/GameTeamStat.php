@@ -14,6 +14,7 @@ class GameTeamStat extends Model
         'team_id',
         'score',
         'final_differential',
+        'is_home',
     ];
 
     protected $casts = [

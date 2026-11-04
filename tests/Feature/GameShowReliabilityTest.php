@@ -34,6 +34,7 @@ class GameShowReliabilityTest extends TestCase
             $table->integer('team_id');
             $table->integer('score');
             $table->integer('final_differential')->nullable();
+            $table->boolean('is_home');
             $table->timestamps();
         });
         Schema::create('teams', function ($table) {
@@ -60,7 +61,7 @@ class GameShowReliabilityTest extends TestCase
         });
 
         $this->gameId = Game::create(['title' => 'HOME - AWAY'])->id;
-        GameTeamStat::create(['game_id' => $this->gameId, 'team_id' => 1, 'score' => 80, 'final_differential' => 0]);
+        GameTeamStat::create(['game_id' => $this->gameId, 'team_id' => 1, 'score' => 80, 'final_differential' => 0, 'is_home' => true]);
         // Пять минут на площадке — надёжность заметно меньше единицы, разница между режимами видна.
         GameTeamPlayerStat::create([
             'game_id' => $this->gameId,
