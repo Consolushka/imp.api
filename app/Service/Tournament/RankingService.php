@@ -39,7 +39,8 @@ class RankingService
             $playerStatIdsQuery->where('played_seconds', '>', 0);
         }
 
-        $playerStatRows = $playerStatIdsQuery->get(['player_id', 'team_id', 'id', 'played_seconds'])
+        // Сумма дробных чисел зависит от порядка сложения: без явного порядка среднее игрока менялось бы вместе с порядком строк в базе.
+        $playerStatRows = $playerStatIdsQuery->orderBy('id')->get(['player_id', 'team_id', 'id', 'played_seconds'])
             ->keyBy('id')
             ->toArray();
 
@@ -68,6 +69,9 @@ class RankingService
                 return $avgSeconds >= ($filters->avgMinutes * 60);
             }, ARRAY_FILTER_USE_BOTH);
         }
+
+        // Сортировка ниже не меняет взаимный порядок равных, поэтому при равном среднем места определяет этот ключ.
+        ksort($playerImpsByCompositeKey, SORT_STRING);
 
         uasort($playerImpsByCompositeKey, function ($a, $b) use ($filters) {
             $avgA = array_sum($a) / count($a);
