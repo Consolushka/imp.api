@@ -10,6 +10,7 @@ use App\Service\Tournament\RankingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use Tests\TestCase;
 
 class RankingServiceTest extends TestCase
@@ -72,13 +73,13 @@ class RankingServiceTest extends TestCase
         ], $overrides));
     }
 
-    private function mockImps(string $per = 'fullGame', bool $useReliability = true): void
+    private function mockImps(string $per = 'fullGame', bool $useReliability = true, array $imps = self::IMP_BY_STAT_ID): void
     {
         $this->mock(ImpService::class)
             ->shouldReceive('calcImpForStatIds')
             ->with(\Mockery::any(), [$per], $useReliability)
             ->andReturnUsing(fn (array $ids) => collect($ids)
-                ->mapWithKeys(fn (int $id) => [$id => [$per => new ImpPerDto(self::IMP_BY_STAT_ID[$id])]])
+                ->mapWithKeys(fn (int $id) => [$id => [$per => new ImpPerDto($imps[$id])]])
                 ->all());
     }
 
@@ -119,5 +120,50 @@ class RankingServiceTest extends TestCase
         $ranking = app(RankingService::class)->calculate($this->filters(per: 'clean', useReliability: false));
 
         $this->assertSame(30.0, $ranking[0]->getAvgImp());
+    }
+
+    #[TestWith(['asc'])]
+    #[TestWith(['desc'])]
+    public function test_equal_averages_keep_order_whatever_the_row_order(string $order): void
+    {
+        $this->mockImps(imps: [1 => 5.0, 2 => 5.0]);
+
+        foreach ([[1, 2], [2, 1]] as [$firstRowPlayerId, $secondRowPlayerId]) {
+            DB::table('game_team_player_stats')->delete();
+            DB::table('game_team_player_stats')->insert([
+                ['id' => 1, 'game_id' => 1, 'team_id' => 1, 'player_id' => $firstRowPlayerId, 'played_seconds' => 600],
+                ['id' => 2, 'game_id' => 1, 'team_id' => 1, 'player_id' => $secondRowPlayerId, 'played_seconds' => 600],
+            ]);
+
+            $ranking = app(RankingService::class)->calculate($this->filters(order: $order));
+
+            $this->assertSame(
+                [1, 2],
+                array_map(fn (RankedPlayerDto $player) => $player->getPlayerId(), $ranking)
+            );
+        }
+    }
+
+    public function test_average_does_not_depend_on_read_order(): void
+    {
+        $this->mockImps(imps: [1 => 0.1, 2 => 0.2, 3 => 0.3]);
+
+        DB::table('games')->insert(['id' => 4, 'tournament_id' => 1]);
+        DB::table('game_team_player_stats')->delete();
+        DB::table('game_team_player_stats')->insert([
+            ['id' => 1, 'game_id' => 4, 'team_id' => 1, 'player_id' => 1, 'played_seconds' => 600],
+            ['id' => 2, 'game_id' => 2, 'team_id' => 1, 'player_id' => 1, 'played_seconds' => 600],
+            ['id' => 3, 'game_id' => 1, 'team_id' => 1, 'player_id' => 1, 'played_seconds' => 600],
+        ]);
+        // С индексом по игре база отдаёт строки по играм, то есть в обратном порядке id: так порядок чтения меняется без правки данных.
+        Schema::table('game_team_player_stats', fn ($table) => $table->index('game_id'));
+        $this->assertSame(
+            [3, 2, 1],
+            DB::table('game_team_player_stats')->whereIn('game_id', [1, 2, 4])->pluck('id')->all()
+        );
+
+        $ranking = app(RankingService::class)->calculate($this->filters());
+
+        $this->assertSame((0.1 + 0.2 + 0.3) / 3, $ranking[0]->getAvgImp());
     }
 }
