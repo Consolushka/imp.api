@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Dtos\PlayerOfTheDayDto;
+use App\Http\Requests\PlayersOfTheDayRequest;
 use App\Http\Requests\TournamentsListRequest;
 use App\Http\Resources\DailyInsightResource;
 use App\Http\Resources\PlayerOfTheDayResource;
@@ -44,11 +45,11 @@ class TournamentsController extends Controller
         return TournamentResource::collection($tournaments);
     }
 
-    public function playersOfTheDay(Request $request, int $id)
+    public function playersOfTheDay(PlayersOfTheDayRequest $request, int $id)
     {
-        $limit = (int)$request->get('limit', 5);
-        $useReliability = filter_var($request->get('use_reliability', true), FILTER_VALIDATE_BOOLEAN);
-        $date = $request->has('date') ? Carbon::parse($request->get('date')) : $this->tournamentService->lastGameDay($id);
+        $limit = $request->getLimit();
+        $useReliability = $request->useReliability();
+        $date = $request->getDate() ?? $this->tournamentService->lastGameDay($id);
         $dateStr = $date->toDateString();
 
         $cacheKey = TournamentCacheKeys::playersOfTheDay($id, $limit, $useReliability, $dateStr);
@@ -63,6 +64,8 @@ class TournamentsController extends Controller
 
     public function dailyInsights(Request $request, int $id, DailyInsightEngine $engine)
     {
+        $request->validate(['date' => 'date']);
+
         $date = $request->has('date') ? Carbon::parse($request->get('date')) : $this->tournamentService->lastGameDay($id);
         $dateStr = $date->toDateString();
 
@@ -116,6 +119,8 @@ class TournamentsController extends Controller
 
     public function weeklyLeaders(Request $request, int $id, WeeklyLeadersService $weeklyLeadersService): AnonymousResourceCollection
     {
+        $request->validate(['date' => 'date']);
+
         $referenceDate = $request->has('date') ? Carbon::parse($request->get('date')) : now();
         $dateStr = $referenceDate->toDateString();
 

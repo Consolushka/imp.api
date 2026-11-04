@@ -54,7 +54,7 @@ class PlayersRecentImpRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        if ($this->has('use_reliability')) {
+        if ($this->filled('use_reliability')) {
             $this->merge([
                 'use_reliability' => filter_var($this->use_reliability, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
             ]);
@@ -68,9 +68,9 @@ class PlayersRecentImpRequest extends FormRequest
     {
         return [
             'player_ids'      => 'required|array',
-            'player_ids.*'    => 'exists:players,id',
-            'tournament_id'   => 'required|exists:tournaments,id',
-            'team_id'         => 'exists:teams,id',
+            'player_ids.*'    => 'integer|exists:players,id',
+            'tournament_id'   => 'required|integer|exists:tournaments,id',
+            'team_id'         => 'integer|exists:teams,id',
             'per'             => 'required|in:' . implode(',', PersEnum::stringCases()),
             'offset'          => 'integer|min:0',
             'limit'           => 'integer|min:1|max:100',
