@@ -27,25 +27,9 @@ class GameStatsIsHomeTest extends TestCase
             $table->integer('team_id');
             $table->integer('score');
             $table->integer('final_differential')->nullable();
+            $table->boolean('is_home');
             $table->timestamps();
         });
-    }
-
-    public function test_first_inserted_team_stat_is_home(): void
-    {
-        $game = Game::create(['title' => 'HOME - AWAY']);
-        $other = Game::create(['title' => 'X - Y']);
-        // В другой игре строка вставлена раньше — не должна влиять на определение хозяина в первой.
-        GameTeamStat::create(['game_id' => $other->id, 'team_id' => 9, 'score' => 1]);
-        GameTeamStat::create(['game_id' => $game->id, 'team_id' => 1, 'score' => 80]);
-        GameTeamStat::create(['game_id' => $game->id, 'team_id' => 2, 'score' => 70]);
-
-        $stats = Game::with('gameTeamStats')->find($game->id)->gameTeamStats->keyBy('team_id');
-
-        $this->assertTrue($stats[1]->is_home);
-        $this->assertFalse($stats[2]->is_home);
-        $this->assertSame([true, false], $stats->pluck('is_home')->all());
-
         Schema::create('teams', function ($table) {
             $table->id();
             $table->string('name')->nullable();
@@ -53,17 +37,36 @@ class GameStatsIsHomeTest extends TestCase
             $table->string('alias')->nullable();
             $table->timestamps();
         });
+        Schema::create('players', function ($table) {
+            $table->id();
+            $table->string('full_name')->nullable();
+            $table->timestamp('birth_date_at')->nullable();
+            $table->timestamps();
+        });
         Schema::create('game_team_player_stats', function ($table) {
             $table->id();
             $table->integer('game_id');
             $table->integer('team_id');
             $table->integer('player_id');
+            $table->integer('played_seconds');
+            $table->integer('plus_minus');
+            $table->timestamps();
         });
+    }
 
-        $this->getJson("/api/games/{$game->id}/stats")
-            ->assertOk()
-            ->assertJsonPath('data.game_team_stats.0.team_id', 1)
-            ->assertJsonPath('data.game_team_stats.0.is_home', true)
-            ->assertJsonPath('data.game_team_stats.1.is_home', false);
+    public function test_is_home_comes_from_column_not_insert_order(): void
+    {
+        $gameId = Game::create(['title' => 'HOME - AWAY'])->id;
+        // Гости вставлены раньше хозяев: по старому правилу «наименьший id» хозяевами стали бы они.
+        GameTeamStat::create(['game_id' => $gameId, 'team_id' => 2, 'score' => 70, 'is_home' => false]);
+        GameTeamStat::create(['game_id' => $gameId, 'team_id' => 1, 'score' => 80, 'is_home' => true]);
+
+        foreach (["/api/games/{$gameId}", "/api/games/{$gameId}/stats"] as $uri) {
+            $isHomeByTeam = collect($this->getJson($uri)->assertOk()->json('data.game_team_stats'))
+                ->pluck('is_home', 'team_id');
+
+            $this->assertTrue($isHomeByTeam[1], $uri);
+            $this->assertFalse($isHomeByTeam[2], $uri);
+        }
     }
 }
