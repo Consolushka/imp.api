@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class TournamentDailyBlocksTest extends TestCase
@@ -152,6 +153,62 @@ class TournamentDailyBlocksTest extends TestCase
 
         $this->assertSame('2026-10-18', $response->json('date'));
         $this->assertSame([], $response->json('data'));
+    }
+
+    public static function invalidPlayersOfTheDayQueries(): array
+    {
+        return [
+            'empty reliability' => ['use_reliability=', 'use_reliability'],
+            'text reliability' => ['use_reliability=abc', 'use_reliability'],
+            'text date' => ['date=abc', 'date'],
+            'array date' => ['date[]=2026-10-10', 'date'],
+            'empty date' => ['date=', 'date'],
+            'limit above maximum' => ['limit=101', 'limit'],
+            'limit below minimum' => ['limit=0', 'limit'],
+            'text limit' => ['limit=abc', 'limit'],
+        ];
+    }
+
+    #[DataProvider('invalidPlayersOfTheDayQueries')]
+    public function test_players_of_the_day_reject_invalid_params(string $query, string $field): void
+    {
+        $this->getJson("/api/tournaments/1/players-of-the-day?{$query}")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors($field);
+    }
+
+    public function test_players_of_the_day_defaults_read_the_warmed_record(): void
+    {
+        Cache::put(TournamentCacheKeys::playersOfTheDay(1, 5, true, '2026-10-17'), collect(), now()->addDay());
+
+        $this->getJson('/api/tournaments/1/players-of-the-day')
+            ->assertOk()
+            ->assertJsonPath('data', []);
+    }
+
+    public static function invalidDates(): array
+    {
+        return [
+            'insights text' => ['daily-insights', 'date=abc'],
+            'insights array' => ['daily-insights', 'date[]=2026-10-10'],
+            'insights empty' => ['daily-insights', 'date='],
+            'leaders text' => ['weekly-leaders', 'date=abc'],
+            'leaders array' => ['weekly-leaders', 'date[]=2026-10-10'],
+            'leaders empty' => ['weekly-leaders', 'date='],
+        ];
+    }
+
+    #[DataProvider('invalidDates')]
+    public function test_invalid_date_is_rejected(string $block, string $query): void
+    {
+        $this->getJson("/api/tournaments/1/{$block}?{$query}")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('date');
+    }
+
+    public function test_weekly_leaders_accept_a_valid_date(): void
+    {
+        $this->getJson('/api/tournaments/1/weekly-leaders?date=2026-10-17')->assertOk();
     }
 
     public function test_daily_insights_default_to_last_game_day(): void
