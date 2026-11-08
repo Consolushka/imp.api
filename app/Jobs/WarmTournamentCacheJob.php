@@ -23,7 +23,7 @@ class WarmTournamentCacheJob implements ShouldBeUniqueUntilProcessing, ShouldQue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    // Запас на случай, если job потеряется и не запустится: без срока прогрев турнира не ставился бы никогда.
+    // Если job потеряется и не запустится, события по турниру отбрасываются только это время.
     // Должен быть больше задержки запуска в webhook, иначе дубли будут проходить, пока job ждёт.
     public int $uniqueFor = 900;
 
@@ -55,7 +55,9 @@ class WarmTournamentCacheJob implements ShouldBeUniqueUntilProcessing, ShouldQue
         // Рейтинг не греем: наборов фильтров слишком много. С новой версией первый запрос посчитает его заново.
         // Первым шагом, чтобы падение тяжёлых шагов ниже не оставило устаревший рейтинг.
         // ponytail: записи старых версий остаются в таблице кеша до планового удаления просроченных (API-10).
-        Cache::forever(TournamentCacheKeys::leaderboardVersion($this->tournamentId), now()->getTimestampMs());
+        // Срок обязан быть больше суток, которые живёт сам рейтинг: иначе, когда версия истечёт, снова прочитается старый расчёт.
+        // Бессрочно нельзя: кеш пишет такую запись на 10 лет вперёд, и с 2028 года дата не поместится в колонку.
+        Cache::put(TournamentCacheKeys::leaderboardVersion($this->tournamentId), now()->getTimestampMs(), now()->addDays(2));
 
         // 1. Warm Best Player (24h)
         $bestPlayer = $tournamentService->getBestPlayerFullName($tournament);
