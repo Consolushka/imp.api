@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,6 +39,19 @@ class Tournament extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where(fn (Builder $q) => $q->whereNull('end_at')->orWhere('end_at', '>=', now()));
+    }
+
+    // Сезон для проверки запрошенной даты: даты турнира, а когда Argus их не знает — первая и последняя игра в расписании.
+    public function coversDay(Carbon $day): bool
+    {
+        $start = $this->start_at ?? $this->games()->min('scheduled_at');
+        $end = $this->end_at ?? $this->games()->max('scheduled_at');
+
+        if ($start === null || $end === null) {
+            return false;
+        }
+
+        return $day->between(Carbon::parse($start)->startOfDay(), Carbon::parse($end)->endOfDay());
     }
 
     public function league(): BelongsTo
