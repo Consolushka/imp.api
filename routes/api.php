@@ -14,6 +14,14 @@ use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\Webhooks\AggregatorWebhookController;
 use Illuminate\Support\Facades\Route;
 
+// 18 цифр всегда помещаются в целое число PHP, а всё остальное контроллер принять не сможет и ответит ошибкой сервера.
+Route::patterns([
+    'id' => '[0-9]{1,18}',
+    'league' => '[0-9]{1,18}',
+    'tournament' => '[0-9]{1,18}',
+    'game' => '[0-9]{1,18}',
+]);
+
 Route::get('summary', [SummaryController::class, 'index']);
 
 Route::post('webhooks/aggregator/game-imported', [AggregatorWebhookController::class, 'gameImported'])
