@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Jobs\WarmTournamentCacheJob;
 use App\Service\Narratives\DailyInsightEngine;
+use App\Service\Tournament\RankingService;
 use App\Service\Tournament\TournamentCacheKeys;
 use App\Service\Tournament\TournamentService;
 use App\Service\Tournament\WeeklyLeadersService;
@@ -248,5 +249,20 @@ class TournamentDailyBlocksTest extends TestCase
         $this->assertTrue(Cache::has(TournamentCacheKeys::dailyInsights(1, '2026-10-17')));
 
         $this->assertSame('2026-10-17', $this->getJson('/api/tournaments/1/players-of-the-day')->json('date'));
+    }
+
+    public function test_game_import_recalculates_only_its_tournament_leaderboard(): void
+    {
+        $this->mock(RankingService::class)->shouldReceive('calculate')->times(3)->andReturn([]);
+        $leaderboard = fn (int $tournamentId) => $this->getJson("/api/leaderboard?tournament_id={$tournamentId}&per=fullGame")->assertOk();
+
+        $leaderboard(1);
+        $leaderboard(2);
+        $leaderboard(1);
+
+        WarmTournamentCacheJob::dispatchSync(1);
+
+        $leaderboard(1);
+        $leaderboard(2);
     }
 }

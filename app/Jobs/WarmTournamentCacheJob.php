@@ -39,6 +39,11 @@ class WarmTournamentCacheJob implements ShouldQueue
             return;
         }
 
+        // Рейтинг не греем: наборов фильтров слишком много. С новой версией первый запрос посчитает его заново.
+        // Первым шагом, чтобы падение тяжёлых шагов ниже не оставило устаревший рейтинг.
+        // ponytail: записи старых версий остаются в таблице кеша до планового удаления просроченных (API-10).
+        Cache::forever(TournamentCacheKeys::leaderboardVersion($this->tournamentId), now()->getTimestampMs());
+
         // 1. Warm Best Player (24h)
         $bestPlayer = $tournamentService->getBestPlayerFullName($tournament);
         Cache::put(TournamentCacheKeys::bestPlayer($this->tournamentId), $bestPlayer, now()->addDay());
