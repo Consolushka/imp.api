@@ -99,13 +99,13 @@ class ImpRankingRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Каждое новое значение порога — отдельный расчёт и запись в кеше, поэтому у порогов есть потолок: сезон не длиннее 100 игр, матч — 48 минут.
         return [
             'tournament_id'   => 'required|integer|exists:tournaments,id',
             'per'             => 'required|in:' . implode(',', PersEnum::stringCases()),
             'limit'           => 'integer|min:1|max:100',
             'page'            => 'integer|min:1',
             'order'           => 'in:asc,desc',
-            // Каждое новое значение фильтра — отдельный расчёт и запись в кеше, поэтому у порогов есть потолок: сезон не длиннее 100 игр, матч — 48 минут.
             'min_games'       => 'integer|min:1|max:100',
             'team_id'         => 'integer|exists:teams,id',
             'min_minutes'     => 'integer|min:1|max:48',
