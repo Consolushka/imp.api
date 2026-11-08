@@ -9,15 +9,23 @@ use App\Service\Tournament\TournamentCacheKeys;
 use App\Service\Tournament\TournamentService;
 use App\Service\Tournament\WeeklyLeadersService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 
-class WarmTournamentCacheJob implements ShouldQueue
+// Argus присылает событие на каждую игру опроса, а прогрев считает весь турнир. Пока job турнира ждёт запуска,
+// новые события по нему отбрасываются: она и так посчитает свежие данные. Событие во время работы ставит
+// следующую job, чтобы игры, сохранённые после её старта, не пропали.
+class WarmTournamentCacheJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    // Запас на случай, если job потеряется и не запустится: без срока прогрев турнира не ставился бы никогда.
+    // Должен быть больше задержки запуска в webhook, иначе дубли будут проходить, пока job ждёт.
+    public int $uniqueFor = 900;
 
     /**
      * Create a new job instance.
@@ -25,6 +33,11 @@ class WarmTournamentCacheJob implements ShouldQueue
     public function __construct(
         private readonly int $tournamentId
     ) {}
+
+    public function uniqueId(): string
+    {
+        return (string) $this->tournamentId;
+    }
 
     /**
      * Execute the job.
