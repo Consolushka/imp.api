@@ -29,9 +29,17 @@ Route::resource('leagues.tournaments', LeagueTournamentsController::class)->only
 ]);
 
 Route::get('tournaments/summary', [TournamentsController::class, 'summary']);
-Route::get('tournaments/{tournament}/weekly-leaders', [TournamentsController::class, 'weeklyLeaders']);
-Route::get('tournaments/{tournament}/players-of-the-day', [TournamentsController::class, 'playersOfTheDay']);
-Route::get('tournaments/{tournament}/daily-insights', [TournamentsController::class, 'dailyInsights']);
+
+// Публичные расчёты, кешируемые по параметрам запроса: один счётчик на клиента, чтобы перебор значений не превращался в нагрузку на БД.
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('tournaments/{tournament}/weekly-leaders', [TournamentsController::class, 'weeklyLeaders']);
+    Route::get('tournaments/{tournament}/players-of-the-day', [TournamentsController::class, 'playersOfTheDay']);
+    Route::get('tournaments/{tournament}/daily-insights', [TournamentsController::class, 'dailyInsights']);
+    Route::resource('leaderboard', ImpRankingsController::class)->only([
+        'index'
+    ]);
+});
+
 Route::resource('tournaments', TournamentsController::class)->only([
     'index', 'show'
 ]);
@@ -62,7 +70,3 @@ Route::resource('imp', ImpController::class)->only([
 
 Route::post('imp/calculate-raw', [ImpController::class, 'calculateRaw'])
     ->middleware('static.token');
-
-Route::resource('leaderboard', ImpRankingsController::class)->only([
-    'index'
-]);
