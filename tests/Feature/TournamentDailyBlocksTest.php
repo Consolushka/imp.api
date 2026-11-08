@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Jobs\WarmTournamentCacheJob;
+use App\Models\Tournament;
 use App\Service\Narratives\DailyInsightEngine;
+use App\Service\Tournament\RankingService;
 use App\Service\Tournament\TournamentCacheKeys;
 use App\Service\Tournament\TournamentService;
 use App\Service\Tournament\WeeklyLeadersService;
+use Illuminate\Bus\UniqueLock;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -248,5 +251,35 @@ class TournamentDailyBlocksTest extends TestCase
         $this->assertTrue(Cache::has(TournamentCacheKeys::dailyInsights(1, '2026-10-17')));
 
         $this->assertSame('2026-10-17', $this->getJson('/api/tournaments/1/players-of-the-day')->json('date'));
+    }
+
+    public function test_game_import_recalculates_only_its_tournament_leaderboard(): void
+    {
+        $this->mock(RankingService::class)->shouldReceive('calculate')->times(3)->andReturn([]);
+        $leaderboard = fn (int $tournamentId) => $this->getJson("/api/leaderboard?tournament_id={$tournamentId}&per=fullGame")->assertOk();
+
+        $leaderboard(1);
+        $leaderboard(2);
+        $leaderboard(1);
+
+        WarmTournamentCacheJob::dispatchSync(1);
+
+        $leaderboard(1);
+        $leaderboard(2);
+    }
+
+    public function test_game_saved_during_warm_can_queue_the_next_warm(): void
+    {
+        $lockKey = UniqueLock::getKey(new WarmTournamentCacheJob(1));
+        $lockIsFreeDuringWarm = null;
+
+        // Загрузка турнира — первое, что делает job, поэтому здесь видно состояние блокировки во время её работы.
+        Tournament::retrieved(function () use ($lockKey, &$lockIsFreeDuringWarm) {
+            $lockIsFreeDuringWarm ??= (bool) Cache::lock($lockKey, 1)->get();
+        });
+
+        WarmTournamentCacheJob::dispatch(1);
+
+        $this->assertTrue($lockIsFreeDuringWarm);
     }
 }

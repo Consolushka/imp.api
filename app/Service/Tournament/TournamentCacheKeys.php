@@ -2,9 +2,21 @@
 
 namespace App\Service\Tournament;
 
+use App\Dtos\RankingFilters;
+
 // Ключи кеша в одном месте: контроллеры читают, джоба прогрева пишет — расхождение сделало бы прогрев бесполезным.
 final class TournamentCacheKeys
 {
+    public static function leaderboardVersion(int $tournamentId): string
+    {
+        return "tournament_{$tournamentId}_leaderboard_version";
+    }
+
+    public static function leaderboard(RankingFilters $filters, int $version): string
+    {
+        return "leaderboard_{$filters->tournamentId}_v{$version}_".md5(json_encode($filters));
+    }
+
     public static function bestPlayer(int $tournamentId): string
     {
         return "tournament_{$tournamentId}_best_player";

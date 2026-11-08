@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ImpRankingRequest;
 use App\Http\Resources\RankedPlayerResource;
 use App\Service\Tournament\RankingService;
+use App\Service\Tournament\TournamentCacheKeys;
 use Illuminate\Support\Facades\Cache;
 
 class ImpRankingsController
@@ -13,7 +14,9 @@ class ImpRankingsController
     {
         // Страницы — срезы одного рейтинга: иначе каждая считала бы его заново, а позиции могли бы разъехаться.
         $filters = $request->rankingFilters();
-        $cacheKey = 'leaderboard_'.md5(json_encode($filters));
+        // После импорта игры прогрев меняет версию, и рейтинг, посчитанный до импорта, больше не читается.
+        $version = Cache::get(TournamentCacheKeys::leaderboardVersion($filters->tournamentId), 0);
+        $cacheKey = TournamentCacheKeys::leaderboard($filters, $version);
 
         $leaderboard = Cache::remember($cacheKey, now()->addDay(), function () use ($filters, $rankingService) {
             return $rankingService->calculate($filters);

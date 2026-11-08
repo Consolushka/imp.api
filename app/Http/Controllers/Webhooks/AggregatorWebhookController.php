@@ -12,7 +12,9 @@ class AggregatorWebhookController extends Controller
     {
         $tournamentId = $request->validated('tournament_id');
 
-        WarmTournamentCacheJob::dispatch((int)$tournamentId);
+        // Задержка даёт Argus досохранить остальные игры опроса, чтобы прогрев прошёл один раз на все.
+        // ponytail: окно подобрано на глаз; если опрос дольше пяти минут, прогревов будет несколько.
+        WarmTournamentCacheJob::dispatch((int) $tournamentId)->delay(now()->addMinutes(5));
 
         return response()->json(['status' => 'Accepted'], 202);
     }
