@@ -105,10 +105,11 @@ class ImpRankingRequest extends FormRequest
             'limit'           => 'integer|min:1|max:100',
             'page'            => 'integer|min:1',
             'order'           => 'in:asc,desc',
-            'min_games'       => 'integer|min:1',
+            // Каждое новое значение фильтра — отдельный расчёт и запись в кеше, поэтому у порогов есть потолок: сезон не длиннее 100 игр, матч — 48 минут.
+            'min_games'       => 'integer|min:1|max:100',
             'team_id'         => 'integer|exists:teams,id',
-            'min_minutes'     => 'integer|min:1',
-            'avg_minutes'     => 'integer|min:1',
+            'min_minutes'     => 'integer|min:1|max:48',
+            'avg_minutes'     => 'integer|min:1|max:48',
             'use_reliability' => 'boolean',
         ];
     }
