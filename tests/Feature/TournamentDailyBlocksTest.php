@@ -310,6 +310,7 @@ class TournamentDailyBlocksTest extends TestCase
             app(WeeklyLeadersService::class),
             app(TournamentService::class),
             app(DailyInsightEngine::class),
+            app(RankingService::class),
         );
 
         $this->assertTrue(Cache::has(TournamentCacheKeys::playersOfTheDay(1, 5, true, '2026-10-17')));
@@ -318,9 +319,10 @@ class TournamentDailyBlocksTest extends TestCase
         $this->assertSame('2026-10-17', $this->getJson('/api/tournaments/1/players-of-the-day')->json('date'));
     }
 
-    public function test_game_import_recalculates_only_its_tournament_leaderboard(): void
+    public function test_game_import_warms_only_its_tournament_leaderboard(): void
     {
-        $this->mock(RankingService::class)->shouldReceive('calculate')->times(3)->andReturn([]);
+        // Два первых промаха по турнирам 1 и 2 и ещё два — прогрев турнира 1; остальные запросы читают кеш.
+        $this->partialMock(RankingService::class)->shouldReceive('calculateBase')->times(4)->andReturn([]);
         $leaderboard = fn (int $tournamentId) => $this->getJson("/api/leaderboard?tournament_id={$tournamentId}&per=fullGame")->assertOk();
 
         $leaderboard(1);
@@ -331,6 +333,45 @@ class TournamentDailyBlocksTest extends TestCase
 
         $leaderboard(1);
         $leaderboard(2);
+    }
+
+    public function test_warm_job_fills_the_leaderboard_base_for_the_dashboard(): void
+    {
+        $mock = $this->partialMock(RankingService::class);
+        $mock->shouldReceive('calculateBase')->once()->with(1, 'fullGame', true)->andReturn([[1, 1, 600, 1.0]]);
+        $mock->shouldReceive('calculateBase')->once()->with(1, 'fullGame', false)->andReturn([[1, 1, 600, 2.0]]);
+
+        WarmTournamentCacheJob::dispatchSync(1);
+
+        $version = Cache::get(TournamentCacheKeys::leaderboardVersion(1));
+        $this->assertSame([[1, 1, 600, 1.0]], Cache::get(TournamentCacheKeys::leaderboardBase(1, 'fullGame', true, $version)));
+        $this->assertSame([[1, 1, 600, 2.0]], Cache::get(TournamentCacheKeys::leaderboardBase(1, 'fullGame', false, $version)));
+        $this->assertFalse(Cache::has(TournamentCacheKeys::leaderboardBase(1, 'bench', true, $version)));
+    }
+
+    public function test_warm_job_removes_bases_of_the_previous_version(): void
+    {
+        $this->partialMock(RankingService::class)->shouldReceive('calculateBase')->twice()->andReturn([]);
+        Cache::put(TournamentCacheKeys::leaderboardVersion(1), 111, now()->addDay());
+        Cache::put(TournamentCacheKeys::leaderboardBase(1, 'fullGame', false, 111), [[1, 1, 600, 1.0]], now()->addDay());
+        Cache::put(TournamentCacheKeys::leaderboardBase(1, 'bench', true, 111), [[1, 1, 600, 1.0]], now()->addDay());
+
+        WarmTournamentCacheJob::dispatchSync(1);
+
+        $this->assertFalse(Cache::has(TournamentCacheKeys::leaderboardBase(1, 'fullGame', false, 111)));
+        $this->assertFalse(Cache::has(TournamentCacheKeys::leaderboardBase(1, 'bench', true, 111)));
+    }
+
+    public function test_failed_base_calculation_keeps_the_previous_version(): void
+    {
+        $this->partialMock(RankingService::class)->shouldReceive('calculateBase')->andThrow(new \RuntimeException('boom'));
+        Cache::put(TournamentCacheKeys::leaderboardVersion(1), 111, now()->addDay());
+        Cache::put(TournamentCacheKeys::leaderboardBase(1, 'fullGame', true, 111), [[1, 1, 600, 1.0]], now()->addDay());
+
+        $this->assertThrows(fn () => WarmTournamentCacheJob::dispatchSync(1), \RuntimeException::class);
+
+        $this->assertSame(111, Cache::get(TournamentCacheKeys::leaderboardVersion(1)));
+        $this->assertTrue(Cache::has(TournamentCacheKeys::leaderboardBase(1, 'fullGame', true, 111)));
     }
 
     public function test_game_saved_during_warm_can_queue_the_next_warm(): void

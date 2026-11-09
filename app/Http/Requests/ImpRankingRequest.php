@@ -99,7 +99,7 @@ class ImpRankingRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Каждое новое значение порога — отдельный расчёт и запись в кеше, поэтому у порогов есть потолок: сезон не длиннее 100 игр, матч — 48 минут.
+        // Значения выше потолка бессмысленны: сезон не длиннее 100 игр, матч — 48 минут.
         return [
             'tournament_id'   => 'required|integer|exists:tournaments,id',
             'per'             => 'required|in:' . implode(',', PersEnum::stringCases()),
