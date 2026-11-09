@@ -166,4 +166,52 @@ class RankingServiceTest extends TestCase
 
         $this->assertSame((0.1 + 0.2 + 0.3) / 3, $ranking[0]->getAvgImp());
     }
+
+    public function test_base_contains_played_rows_of_the_tournament_ordered_by_id(): void
+    {
+        $this->mockImps();
+
+        $this->assertSame(
+            [[1, 1, 1200, 10.0], [1, 1, 1200, 20.0], [2, 2, 600, 30.0]],
+            app(RankingService::class)->calculateBase(1, 'fullGame', true)
+        );
+    }
+
+    public function test_base_passes_per_and_reliability_to_the_imp_calculation(): void
+    {
+        $this->mockImps(per: 'clean', useReliability: false);
+
+        $base = app(RankingService::class)->calculateBase(1, 'clean', false);
+
+        $this->assertSame(10.0, $base[0][3]);
+    }
+
+    public function test_hydrate_builds_dtos_and_loads_only_requested_rows(): void
+    {
+        DB::enableQueryLog();
+
+        $hydrated = app(RankingService::class)->hydrate([
+            ['position' => 7, 'playerId' => 1, 'teamId' => 1, 'games' => 2, 'avgImp' => 15.0, 'avgPlayedSeconds' => 1200],
+        ]);
+
+        $playersQuery = collect(DB::getQueryLog())->first(fn (array $entry) => str_contains($entry['query'], 'players'));
+        $this->assertSame([1], $playersQuery['bindings']);
+
+        $this->assertCount(1, $hydrated);
+        $this->assertSame(7, $hydrated[0]->getLeaderboardPosition());
+        $this->assertSame(1, $hydrated[0]->getPlayerId());
+        $this->assertSame('AAA', $hydrated[0]->getTeamAlias());
+        $this->assertSame(2, $hydrated[0]->getGames());
+        $this->assertSame(15.0, $hydrated[0]->getAvgImp());
+        $this->assertSame(1200, $hydrated[0]->getAvgPlayedSeconds());
+    }
+
+    public function test_hydrate_uses_empty_alias_when_team_is_missing(): void
+    {
+        $hydrated = app(RankingService::class)->hydrate([
+            ['position' => 1, 'playerId' => 1, 'teamId' => 99, 'games' => 1, 'avgImp' => 1.0, 'avgPlayedSeconds' => 600],
+        ]);
+
+        $this->assertSame('', $hydrated[0]->getTeamAlias());
+    }
 }
