@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Перед API один шлюз dockhost, он сам перезаписывает X-Forwarded-For адресом клиента. Без доверия ему все клиенты выглядели бы как один IP и делили бы один лимит частоты.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'static.token'     => \App\Http\Middleware\StaticTokenMiddleware::class,
             'aggregator.token' => \App\Http\Middleware\AggregatorTokenMiddleware::class,

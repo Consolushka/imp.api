@@ -92,6 +92,9 @@ class TournamentDailyBlocksTest extends TestCase
             ['id' => 1, 'league_id' => 1, 'name' => 'With games', 'regulation_duration' => 40],
             ['id' => 2, 'league_id' => 1, 'name' => 'No games', 'regulation_duration' => 40],
         ]);
+        DB::table('tournaments')->insert(
+            ['id' => 3, 'league_id' => 1, 'name' => 'Game after end date', 'start_at' => '2026-09-01 00:00:00', 'end_at' => '2026-09-30 00:00:00', 'regulation_duration' => 40],
+        );
         DB::table('teams')->insert([
             ['id' => 1, 'alias' => 'HOME'],
             ['id' => 2, 'alias' => 'AWAY'],
@@ -104,6 +107,7 @@ class TournamentDailyBlocksTest extends TestCase
             ['id' => 1, 'tournament_id' => 1, 'scheduled_at' => '2026-10-17 18:00:00', 'duration' => 40],
             ['id' => 2, 'tournament_id' => 1, 'scheduled_at' => '2026-10-10 18:00:00', 'duration' => 40],
             ['id' => 3, 'tournament_id' => 1, 'scheduled_at' => '2026-10-19 18:00:00', 'duration' => 40],
+            ['id' => 4, 'tournament_id' => 3, 'scheduled_at' => '2026-10-05 18:00:00', 'duration' => 40],
         ]);
         foreach ([1, 2] as $gameId) {
             DB::table('game_team_stats')->insert([
@@ -207,6 +211,67 @@ class TournamentDailyBlocksTest extends TestCase
         $this->getJson("/api/tournaments/1/{$block}?{$query}")
             ->assertUnprocessable()
             ->assertJsonValidationErrors('date');
+    }
+
+    public static function blocks(): array
+    {
+        return [
+            'players of the day' => ['players-of-the-day'],
+            'daily insights' => ['daily-insights'],
+            'weekly leaders' => ['weekly-leaders'],
+        ];
+    }
+
+    #[DataProvider('blocks')]
+    public function test_unknown_tournament_is_not_found(string $block): void
+    {
+        $this->getJson("/api/tournaments/999/{$block}")->assertNotFound();
+        $this->getJson("/api/tournaments/999/{$block}?date=2026-10-17")->assertNotFound();
+    }
+
+    #[DataProvider('blocks')]
+    public function test_date_outside_the_scheduled_games_is_rejected_and_not_cached(string $block): void
+    {
+        // У турнира 1 дат нет, сезон — от первой до последней игры в расписании: 2026-10-10..2026-10-19.
+        foreach (['2026-10-09', '2026-10-20'] as $date) {
+            $this->getJson("/api/tournaments/1/{$block}?date={$date}")
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('date');
+        }
+
+        $this->getJson("/api/tournaments/1/{$block}?date=2026-10-19")->assertOk();
+
+        $this->assertFalse(Cache::has(match ($block) {
+            'players-of-the-day' => TournamentCacheKeys::playersOfTheDay(1, 5, true, '2026-10-09'),
+            'daily-insights' => TournamentCacheKeys::dailyInsights(1, '2026-10-09'),
+            'weekly-leaders' => TournamentCacheKeys::weeklyLeaders(1, '2026-10-09'),
+        }));
+    }
+
+    #[DataProvider('blocks')]
+    public function test_season_spans_tournament_dates_and_scheduled_games(string $block): void
+    {
+        // Даты турнира 3 — сентябрь, но игра стоит на 5 октября: так бывает с плей-офф, и день игры обязан приниматься.
+        foreach (['2026-09-01', '2026-09-30', '2026-10-05'] as $date) {
+            $this->getJson("/api/tournaments/3/{$block}?date={$date}")->assertOk();
+        }
+
+        foreach (['2026-08-31', '2026-10-06'] as $date) {
+            $this->getJson("/api/tournaments/3/{$block}?date={$date}")
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('date');
+        }
+    }
+
+    #[DataProvider('blocks')]
+    public function test_explicit_date_is_rejected_when_the_season_is_unknown(string $block): void
+    {
+        // Ни дат, ни игр — границ нет: принимается только день по умолчанию.
+        $this->getJson("/api/tournaments/2/{$block}?date=2026-10-18")
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('date');
+
+        $this->getJson("/api/tournaments/2/{$block}")->assertOk();
     }
 
     public function test_weekly_leaders_accept_a_valid_date(): void
