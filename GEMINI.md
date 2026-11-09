@@ -15,7 +15,7 @@ A Laravel-based dashboard for calculating and displaying IMP (International Matc
     - External network `imp` expected for shared services (like databases).
     - `makefile` for common development tasks.
     - Production container (`dockerfiles/dockhost/entrypoint.sh`) runs the queue worker and the scheduler (`schedule:work`) in the background; scheduled tasks are declared in `routes/console.php`.
-    - The API sits behind a single dockhost gateway that rewrites `X-Forwarded-For`; `trustProxies(at: '*')` in `bootstrap/app.php` relies on that to rate-limit per client.
+    - The API sits behind a single dockhost gateway that rewrites `X-Forwarded-For`; `trustProxies(at: '*')` in `bootstrap/app.php` relies on that to rate-limit per client. The container must never be reachable bypassing the gateway: a direct caller could forge the header and escape the limit.
 
 ## Getting Started
 

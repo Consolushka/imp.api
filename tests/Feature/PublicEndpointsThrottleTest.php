@@ -63,6 +63,8 @@ class PublicEndpointsThrottleTest extends TestCase
         $this->exhaustLimit(['X-Forwarded-For' => '203.0.113.5']);
 
         $this->withHeaders(['X-Forwarded-For' => '203.0.113.5'])->getJson(self::URI)->assertTooManyRequests();
+        // Адрес, который клиент сам подставил в начало цепочки, не помогает: учитывается тот, что дописал шлюз.
+        $this->withHeaders(['X-Forwarded-For' => '198.51.100.1, 203.0.113.5'])->getJson(self::URI)->assertTooManyRequests();
         $this->withHeaders(['X-Forwarded-For' => '203.0.113.6'])->getJson(self::URI)->assertOk();
     }
 }
