@@ -109,6 +109,20 @@ class LeaderboardPaginationTest extends TestCase
         }
     }
 
+    public function test_total_and_positions_follow_the_filtered_ranking(): void
+    {
+        $this->partialMock(RankingService::class, fn (MockInterface $mock) => $mock
+            ->shouldReceive('calculateBase')
+            ->once()
+            ->andReturn([[1, 1, 1200, 10.0], [1, 1, 1200, 20.0], [2, 1, 1200, 30.0]]));
+
+        $response = $this->getJson(self::URI.'&min_games=2')->assertOk();
+
+        $this->assertSame(1, $response->json('meta.total'));
+        $this->assertSame([1], array_column($response->json('data'), 'position'));
+        $this->assertSame(1, $response->json('data.0.player.id'));
+    }
+
     public function test_tournament_per_and_reliability_each_get_their_own_calculation(): void
     {
         DB::table('tournaments')->insert(['id' => 2]);

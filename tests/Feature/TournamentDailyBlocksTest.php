@@ -349,6 +349,31 @@ class TournamentDailyBlocksTest extends TestCase
         $this->assertFalse(Cache::has(TournamentCacheKeys::leaderboardBase(1, 'bench', true, $version)));
     }
 
+    public function test_warm_job_removes_bases_of_the_previous_version(): void
+    {
+        $this->partialMock(RankingService::class)->shouldReceive('calculateBase')->twice()->andReturn([]);
+        Cache::put(TournamentCacheKeys::leaderboardVersion(1), 111, now()->addDay());
+        Cache::put(TournamentCacheKeys::leaderboardBase(1, 'fullGame', false, 111), [[1, 1, 600, 1.0]], now()->addDay());
+        Cache::put(TournamentCacheKeys::leaderboardBase(1, 'bench', true, 111), [[1, 1, 600, 1.0]], now()->addDay());
+
+        WarmTournamentCacheJob::dispatchSync(1);
+
+        $this->assertFalse(Cache::has(TournamentCacheKeys::leaderboardBase(1, 'fullGame', false, 111)));
+        $this->assertFalse(Cache::has(TournamentCacheKeys::leaderboardBase(1, 'bench', true, 111)));
+    }
+
+    public function test_failed_base_calculation_keeps_the_previous_version(): void
+    {
+        $this->partialMock(RankingService::class)->shouldReceive('calculateBase')->andThrow(new \RuntimeException('boom'));
+        Cache::put(TournamentCacheKeys::leaderboardVersion(1), 111, now()->addDay());
+        Cache::put(TournamentCacheKeys::leaderboardBase(1, 'fullGame', true, 111), [[1, 1, 600, 1.0]], now()->addDay());
+
+        $this->assertThrows(fn () => WarmTournamentCacheJob::dispatchSync(1), \RuntimeException::class);
+
+        $this->assertSame(111, Cache::get(TournamentCacheKeys::leaderboardVersion(1)));
+        $this->assertTrue(Cache::has(TournamentCacheKeys::leaderboardBase(1, 'fullGame', true, 111)));
+    }
+
     public function test_game_saved_during_warm_can_queue_the_next_warm(): void
     {
         $lockKey = UniqueLock::getKey(new WarmTournamentCacheJob(1));

@@ -127,6 +127,14 @@ class RankingSelectionTest extends TestCase
         $this->assertSame([1, 2, 3], array_column($ranked, 'position'));
     }
 
+    public function test_thresholds_keep_a_game_exactly_at_the_limit(): void
+    {
+        $rows = [[1, 1, 900, 1.0]];
+
+        $this->assertCount(1, $this->service()->selectRanked($rows, $this->filters(minMinutes: 15)));
+        $this->assertCount(1, $this->service()->selectRanked($rows, $this->filters(avgMinutes: 15)));
+    }
+
     public function test_empty_rows_give_empty_ranking(): void
     {
         $this->assertSame([], $this->service()->selectRanked([], $this->filters()));
