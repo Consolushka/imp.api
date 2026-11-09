@@ -41,17 +41,25 @@ class Tournament extends Model
         return $query->where(fn (Builder $q) => $q->whereNull('end_at')->orWhere('end_at', '>=', now()));
     }
 
-    // Сезон для проверки запрошенной даты: даты турнира, а когда Argus их не знает — первая и последняя игра в расписании.
+    // Сезон для проверки запрошенной даты — от самой ранней до самой поздней отметки среди дат турнира и игр в расписании.
+    // Одним датам турнира верить нельзя: Argus часто знает их неточно, и плей-офф или первые туры оказываются за их пределами.
     public function coversDay(Carbon $day): bool
     {
-        $start = $this->start_at ?? $this->games()->min('scheduled_at');
-        $end = $this->end_at ?? $this->games()->max('scheduled_at');
+        $games = $this->games()
+            ->toBase()
+            ->selectRaw('min(scheduled_at) as first_game, max(scheduled_at) as last_game')
+            ->first();
 
-        if ($start === null || $end === null) {
+        $marks = array_map(
+            fn ($mark) => Carbon::parse($mark),
+            array_filter([$this->start_at, $this->end_at, $games->first_game, $games->last_game])
+        );
+
+        if ($marks === []) {
             return false;
         }
 
-        return $day->between(Carbon::parse($start)->startOfDay(), Carbon::parse($end)->endOfDay());
+        return $day->between(min($marks)->copy()->startOfDay(), max($marks)->copy()->endOfDay());
     }
 
     public function league(): BelongsTo

@@ -90,7 +90,7 @@ class TournamentDailyBlocksTest extends TestCase
             ['id' => 2, 'league_id' => 1, 'name' => 'No games', 'regulation_duration' => 40],
         ]);
         DB::table('tournaments')->insert(
-            ['id' => 3, 'league_id' => 1, 'name' => 'Dated, no games', 'start_at' => '2026-09-01 00:00:00', 'end_at' => '2026-09-30 00:00:00', 'regulation_duration' => 40],
+            ['id' => 3, 'league_id' => 1, 'name' => 'Game after end date', 'start_at' => '2026-09-01 00:00:00', 'end_at' => '2026-09-30 00:00:00', 'regulation_duration' => 40],
         );
         DB::table('teams')->insert([
             ['id' => 1, 'alias' => 'HOME'],
@@ -104,6 +104,7 @@ class TournamentDailyBlocksTest extends TestCase
             ['id' => 1, 'tournament_id' => 1, 'scheduled_at' => '2026-10-17 18:00:00', 'duration' => 40],
             ['id' => 2, 'tournament_id' => 1, 'scheduled_at' => '2026-10-10 18:00:00', 'duration' => 40],
             ['id' => 3, 'tournament_id' => 1, 'scheduled_at' => '2026-10-19 18:00:00', 'duration' => 40],
+            ['id' => 4, 'tournament_id' => 3, 'scheduled_at' => '2026-10-05 18:00:00', 'duration' => 40],
         ]);
         foreach ([1, 2] as $gameId) {
             DB::table('game_team_stats')->insert([
@@ -245,13 +246,18 @@ class TournamentDailyBlocksTest extends TestCase
     }
 
     #[DataProvider('blocks')]
-    public function test_tournament_dates_bound_the_date_when_known(string $block): void
+    public function test_season_spans_tournament_dates_and_scheduled_games(string $block): void
     {
-        $this->getJson("/api/tournaments/3/{$block}?date=2026-09-15")->assertOk();
+        // Даты турнира 3 — сентябрь, но игра стоит на 5 октября: так бывает с плей-офф, и день игры обязан приниматься.
+        foreach (['2026-09-01', '2026-09-30', '2026-10-05'] as $date) {
+            $this->getJson("/api/tournaments/3/{$block}?date={$date}")->assertOk();
+        }
 
-        $this->getJson("/api/tournaments/3/{$block}?date=2026-10-01")
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors('date');
+        foreach (['2026-08-31', '2026-10-06'] as $date) {
+            $this->getJson("/api/tournaments/3/{$block}?date={$date}")
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('date');
+        }
     }
 
     #[DataProvider('blocks')]
