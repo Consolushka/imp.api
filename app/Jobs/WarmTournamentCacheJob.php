@@ -4,7 +4,9 @@ namespace App\Jobs;
 
 use App\Http\Resources\WeeklyLeaderResource;
 use App\Models\Tournament;
+use App\Service\Imp\PersEnum;
 use App\Service\Narratives\DailyInsightEngine;
+use App\Service\Tournament\RankingService;
 use App\Service\Tournament\TournamentCacheKeys;
 use App\Service\Tournament\TournamentService;
 use App\Service\Tournament\WeeklyLeadersService;
@@ -45,19 +47,20 @@ class WarmTournamentCacheJob implements ShouldBeUniqueUntilProcessing, ShouldQue
     public function handle(
         WeeklyLeadersService $weeklyLeadersService,
         TournamentService $tournamentService,
-        DailyInsightEngine $dailyInsightEngine
+        DailyInsightEngine $dailyInsightEngine,
+        RankingService $rankingService
     ): void {
         $tournament = Tournament::find($this->tournamentId);
         if (!$tournament) {
             return;
         }
 
-        // Рейтинг не греем: наборов фильтров слишком много. С новой версией первый запрос посчитает его заново.
         // Первым шагом, чтобы падение тяжёлых шагов ниже не оставило устаревший рейтинг.
         // ponytail: записи старых версий остаются в таблице кеша до планового удаления просроченных (API-10).
         // Срок обязан быть больше суток, которые живёт сам рейтинг: иначе, когда версия истечёт, снова прочитается старый расчёт.
         // Бессрочно нельзя: кеш пишет такую запись на 10 лет вперёд, и с 2028 года дата не поместится в колонку.
-        Cache::put(TournamentCacheKeys::leaderboardVersion($this->tournamentId), now()->getTimestampMs(), now()->addDays(2));
+        $version = now()->getTimestampMs();
+        Cache::put(TournamentCacheKeys::leaderboardVersion($this->tournamentId), $version, now()->addDays(2));
 
         // 1. Warm Best Player (24h)
         $bestPlayer = $tournamentService->getBestPlayerFullName($tournament);
@@ -80,5 +83,12 @@ class WarmTournamentCacheJob implements ShouldBeUniqueUntilProcessing, ShouldQue
 
         $insights = $dailyInsightEngine->analyze($tournamentService->getDailyContext($this->tournamentId, $gameDay));
         Cache::put(TournamentCacheKeys::dailyInsights($this->tournamentId, $gameDayStr), $insights, now()->timezone('UTC')->endOfDay());
+
+        // 5. База рейтинга — только то, что запрашивает dashboard: всегда fullGame, а учёт надёжности переключается. Остальное посчитает первый запрос.
+        // Последним шагом: при сбое расчёта остальные блоки турнира уже обновлены.
+        foreach ([true, false] as $useReliability) {
+            $base = $rankingService->calculateBase($this->tournamentId, PersEnum::FullGame->value, $useReliability);
+            Cache::put(TournamentCacheKeys::leaderboardBase($this->tournamentId, PersEnum::FullGame->value, $useReliability, $version), $base, now()->addDay());
+        }
     }
 }

@@ -59,6 +59,17 @@ class RankingServiceTest extends TestCase
         ]);
     }
 
+    /** @return array<RankedPlayerDto> */
+    private function rank(RankingFilters $filters): array
+    {
+        $service = app(RankingService::class);
+
+        return $service->hydrate($service->selectRanked(
+            $service->calculateBase($filters->tournamentId, $filters->per, $filters->useReliability),
+            $filters
+        ));
+    }
+
     private function filters(mixed ...$overrides): RankingFilters
     {
         return new RankingFilters(...array_merge([
@@ -101,7 +112,7 @@ class RankingServiceTest extends TestCase
     {
         $this->mockImps();
 
-        $ranking = app(RankingService::class)->calculate($this->filters(...$overrides));
+        $ranking = $this->rank($this->filters(...$overrides));
 
         $this->assertSame(
             $expectedPlayerIds,
@@ -117,7 +128,7 @@ class RankingServiceTest extends TestCase
     {
         $this->mockImps(per: 'clean', useReliability: false);
 
-        $ranking = app(RankingService::class)->calculate($this->filters(per: 'clean', useReliability: false));
+        $ranking = $this->rank($this->filters(per: 'clean', useReliability: false));
 
         $this->assertSame(30.0, $ranking[0]->getAvgImp());
     }
@@ -135,7 +146,7 @@ class RankingServiceTest extends TestCase
                 ['id' => 2, 'game_id' => 1, 'team_id' => 1, 'player_id' => $secondRowPlayerId, 'played_seconds' => 600],
             ]);
 
-            $ranking = app(RankingService::class)->calculate($this->filters(order: $order));
+            $ranking = $this->rank($this->filters(order: $order));
 
             $this->assertSame(
                 [1, 2],
@@ -162,7 +173,7 @@ class RankingServiceTest extends TestCase
             DB::table('game_team_player_stats')->whereIn('game_id', [1, 2, 4])->pluck('id')->all()
         );
 
-        $ranking = app(RankingService::class)->calculate($this->filters());
+        $ranking = $this->rank($this->filters());
 
         $this->assertSame((0.1 + 0.2 + 0.3) / 3, $ranking[0]->getAvgImp());
     }

@@ -2,11 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Dtos\RankedPlayerDto;
-use App\Models\Player;
 use App\Service\Tournament\RankingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Mockery\MockInterface;
 use Tests\TestCase;
 
 class LeaderboardPaginationTest extends TestCase
@@ -21,20 +20,27 @@ class LeaderboardPaginationTest extends TestCase
             $table->id();
         });
 
+        Schema::create('players', function ($table) {
+            $table->id();
+        });
+        Schema::create('teams', function ($table) {
+            $table->id();
+            $table->string('alias');
+        });
+
         DB::table('tournaments')->insert(['id' => 1]);
+        DB::table('players')->insert(array_map(fn (int $id) => ['id' => $id], range(1, 25)));
+        DB::table('teams')->insert(['id' => 1, 'alias' => 'TEAM']);
     }
 
     private function mockRanking(int $calculations = 1): void
     {
-        $leaderboard = array_map(
-            fn (int $position) => new RankedPlayerDto($position, $position, new Player, 'TEAM', 5, 10.0, 1200),
-            range(1, 25)
-        );
+        $rows = array_map(fn (int $playerId) => [$playerId, 1, 1200, 10.0], range(1, 25));
 
-        $this->mock(RankingService::class)
-            ->shouldReceive('calculate')
+        $this->partialMock(RankingService::class, fn (MockInterface $mock) => $mock
+            ->shouldReceive('calculateBase')
             ->times($calculations)
-            ->andReturn($leaderboard);
+            ->andReturn($rows));
     }
 
     private function positions(string $query): array
@@ -92,31 +98,24 @@ class LeaderboardPaginationTest extends TestCase
         $this->positions('&order=desc&min_games=1&use_reliability=1');
     }
 
-    public function test_each_filter_gets_its_own_calculation(): void
+    public function test_cheap_filters_share_one_calculation(): void
     {
-        Schema::create('teams', function ($table) {
-            $table->id();
-        });
-
-        DB::table('teams')->insert(['id' => 1]);
-        DB::table('tournaments')->insert(['id' => 2]);
-
-        $filters = [
-            '&tournament_id=2',
-            '&per=clean',
-            '&order=asc',
-            '&min_games=2',
-            '&team_id=1',
-            '&min_minutes=1',
-            '&avg_minutes=1',
-            '&use_reliability=0',
-        ];
-
-        $this->mockRanking(calculations: count($filters) + 1);
+        $this->mockRanking();
 
         $this->positions('');
 
-        foreach ($filters as $filter) {
+        foreach (['&order=asc', '&min_games=2', '&team_id=1', '&min_minutes=1', '&avg_minutes=1'] as $filter) {
+            $this->positions($filter);
+        }
+    }
+
+    public function test_tournament_per_and_reliability_each_get_their_own_calculation(): void
+    {
+        DB::table('tournaments')->insert(['id' => 2]);
+
+        $this->mockRanking(calculations: 4);
+
+        foreach (['', '&tournament_id=2', '&per=clean', '&use_reliability=0'] as $filter) {
             $this->positions($filter);
         }
     }

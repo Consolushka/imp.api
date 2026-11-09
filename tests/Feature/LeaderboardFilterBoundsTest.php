@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Service\Tournament\RankingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Mockery\MockInterface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -35,7 +36,7 @@ class LeaderboardFilterBoundsTest extends TestCase
     #[DataProvider('thresholdsAboveMaximum')]
     public function test_threshold_above_maximum_is_rejected_without_calculation(string $field, int $value): void
     {
-        $this->mock(RankingService::class)->shouldNotReceive('calculate');
+        $this->mock(RankingService::class)->shouldNotReceive('calculateBase');
 
         $this->getJson(self::URI."&{$field}={$value}")
             ->assertUnprocessable()
@@ -54,7 +55,10 @@ class LeaderboardFilterBoundsTest extends TestCase
     #[DataProvider('thresholdsAtMaximum')]
     public function test_threshold_at_maximum_is_accepted(string $field, int $value): void
     {
-        $this->mock(RankingService::class)->shouldReceive('calculate')->once()->andReturn([]);
+        $this->partialMock(RankingService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('calculateBase')->once()->andReturn([]);
+            $mock->shouldReceive('hydrate')->andReturn([]);
+        });
 
         $this->getJson(self::URI."&{$field}={$value}")->assertOk();
     }
