@@ -9,7 +9,7 @@ use Tests\TestCase;
 
 class PruneExpiredCacheTest extends TestCase
 {
-    public function test_only_expired_entries_are_deleted(): void
+    private function seedCacheTable(): void
     {
         Schema::create('cache', function ($table) {
             $table->string('key')->primary();
@@ -22,12 +22,30 @@ class PruneExpiredCacheTest extends TestCase
             ['key' => 'expiring now', 'value' => 'x', 'expiration' => now()->getTimestamp()],
             ['key' => 'live', 'value' => 'x', 'expiration' => now()->addMinute()->getTimestamp()],
         ]);
+    }
+
+    public function test_only_expired_entries_are_deleted(): void
+    {
+        config(['cache.default' => 'database']);
+        $this->seedCacheTable();
 
         $this->artisan('cache:prune-expired')
             ->expectsOutput('Deleted 2 expired cache entries.')
             ->assertSuccessful();
 
         $this->assertSame(['live'], DB::table('cache')->pluck('key')->all());
+    }
+
+    public function test_other_cache_stores_are_left_alone(): void
+    {
+        // В тестах кеш лежит в памяти: таблицу команда трогать не должна, даже если она есть.
+        $this->seedCacheTable();
+
+        $this->artisan('cache:prune-expired')
+            ->expectsOutput('Cache store is not database, nothing to prune.')
+            ->assertSuccessful();
+
+        $this->assertSame(3, DB::table('cache')->count());
     }
 
     public function test_pruning_is_scheduled_hourly(): void

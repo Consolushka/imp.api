@@ -6,8 +6,17 @@ use Illuminate\Support\Facades\DB;
 // Кеш в БД сам просроченные записи не удаляет, пока их кто-то не прочитает: ключи с датами и фильтрами
 // читаются один раз и остались бы в таблице навсегда.
 Artisan::command('cache:prune-expired', function () {
-    $deleted = DB::connection(config('cache.stores.database.connection'))
-        ->table(config('cache.stores.database.table'))
+    $store = config('cache.stores.'.config('cache.default'));
+
+    // У другого хранилища таблицы кеша может не быть вовсе, а если она осталась — её записи уже никто не читает.
+    if (($store['driver'] ?? null) !== 'database') {
+        $this->info('Cache store is not database, nothing to prune.');
+
+        return;
+    }
+
+    $deleted = DB::connection($store['connection'] ?? null)
+        ->table($store['table'])
         ->where('expiration', '<=', now()->getTimestamp())
         ->delete();
 
