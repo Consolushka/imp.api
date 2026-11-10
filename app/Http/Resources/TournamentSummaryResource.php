@@ -30,7 +30,7 @@ class TournamentSummaryResource extends JsonResource
             'teams_count'           => (int) ($this->teams_count ?? 0),
             'best_player_full_name' => $this->best_player_full_name ?? 'John Doe', // Placeholder
             /** @var string|null */
-            'next_update_at'        => $this->next_update_at?->toDateTimeString(),
+            'next_update_at'        => $this->next_update_at?->toIso8601String(),
             'status'                => $status,
         ];
     }

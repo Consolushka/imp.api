@@ -23,8 +23,11 @@ class TournamentSummaryResourceTest extends TestCase
         $this->assertNull($this->nextUpdateAt(null));
     }
 
-    public function test_next_update_at_is_formatted_when_poll_is_promised(): void
+    public function test_next_update_at_carries_timezone_offset(): void
     {
-        $this->assertSame('2026-11-10 14:30:00', $this->nextUpdateAt(Carbon::parse('2026-11-10 14:30:00')));
+        $this->assertSame(
+            '2026-11-10T14:30:00+03:00',
+            $this->nextUpdateAt(Carbon::parse('2026-11-10 14:30:00', 'Europe/Moscow')),
+        );
     }
 }
