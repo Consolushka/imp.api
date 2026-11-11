@@ -190,10 +190,10 @@ class GamesController extends Controller
         $games = Game::query()
             ->with(['gameTeamStats', 'gameTeamStats.team'])
             ->where(function ($query) use ($text) {
-                $query->where('title', 'ilike', "%{$text}%")
+                $query->whereLike('title', "%{$text}%")
                     ->orWhereHas('gameTeamStats.team', function ($query) use ($text) {
-                        $query->where('name', 'ilike', "%{$text}%")
-                            ->orWhere('alias', 'ilike', "%{$text}%");
+                        $query->whereLike('name', "%{$text}%")
+                            ->orWhereLike('alias', "%{$text}%");
                     });
             })
             ->orderBy('scheduled_at', 'desc')
