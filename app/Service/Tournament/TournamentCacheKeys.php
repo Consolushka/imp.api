@@ -5,6 +5,18 @@ namespace App\Service\Tournament;
 // Ключи кеша в одном месте: контроллеры читают, джоба прогрева пишет — расхождение сделало бы прогрев бесполезным.
 final class TournamentCacheKeys
 {
+    public static function leaderboardVersion(int $tournamentId): string
+    {
+        return "tournament_{$tournamentId}_leaderboard_version";
+    }
+
+    public static function leaderboardBase(int $tournamentId, string $per, bool $useReliability, int $version): string
+    {
+        $rel = $useReliability ? 1 : 0;
+
+        return "leaderboard_base_{$tournamentId}_v{$version}_{$per}_rel_{$rel}";
+    }
+
     public static function bestPlayer(int $tournamentId): string
     {
         return "tournament_{$tournamentId}_best_player";

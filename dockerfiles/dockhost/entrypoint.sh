@@ -17,7 +17,6 @@ DB_PASSWORD="${DB_PASSWORD:-}"
 LOG_LEVEL="${LOG_LEVEL:-info}"
 QUEUE_CONNECTION="${QUEUE_CONNECTION:-database}"
 SESSION_DRIVER=file
-CACHE_DRIVER=file
 EOF
 
 # Генерируем ключ приложения если его нет
@@ -31,6 +30,9 @@ php artisan route:cache
 
 # Запускаем фоновый воркер очередей
 nohup php artisan queue:work --tries=3 --timeout=90 > /var/www/html/storage/logs/worker.log 2>&1 &
+
+# Запускаем планировщик: раз в минуту выполняет задачи из routes/console.php
+nohup php artisan schedule:work > /var/www/html/storage/logs/scheduler.log 2>&1 &
 
 # Запускаем Apache
 exec apache2-foreground

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Dtos\PlayerOfTheDayDto;
 use App\Http\Requests\PlayersOfTheDayRequest;
+use App\Http\Requests\TournamentDayRequest;
 use App\Http\Requests\TournamentsListRequest;
 use App\Http\Resources\DailyInsightResource;
 use App\Http\Resources\PlayerOfTheDayResource;
@@ -20,7 +21,6 @@ use App\Service\Narratives\DailyInsightEngine;
 use App\Service\Tournament\TournamentCacheKeys;
 use App\Service\Tournament\TournamentService;
 use App\Service\Tournament\WeeklyLeadersService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
@@ -45,8 +45,9 @@ class TournamentsController extends Controller
         return TournamentResource::collection($tournaments);
     }
 
-    public function playersOfTheDay(PlayersOfTheDayRequest $request, int $id)
+    public function playersOfTheDay(PlayersOfTheDayRequest $request, Tournament $tournament)
     {
+        $id = $tournament->id;
         $limit = $request->getLimit();
         $useReliability = $request->useReliability();
         $date = $request->getDate() ?? $this->tournamentService->lastGameDay($id);
@@ -62,11 +63,10 @@ class TournamentsController extends Controller
         return PlayerOfTheDayResource::collection($playersOfTheDay)->additional(['date' => $dateStr]);
     }
 
-    public function dailyInsights(Request $request, int $id, DailyInsightEngine $engine)
+    public function dailyInsights(TournamentDayRequest $request, Tournament $tournament, DailyInsightEngine $engine)
     {
-        $request->validate(['date' => 'date']);
-
-        $date = $request->has('date') ? Carbon::parse($request->get('date')) : $this->tournamentService->lastGameDay($id);
+        $id = $tournament->id;
+        $date = $request->getDate() ?? $this->tournamentService->lastGameDay($id);
         $dateStr = $date->toDateString();
 
         $cacheKey = TournamentCacheKeys::dailyInsights($id, $dateStr);
@@ -117,11 +117,10 @@ class TournamentsController extends Controller
         return new TournamentResource($tournament);
     }
 
-    public function weeklyLeaders(Request $request, int $id, WeeklyLeadersService $weeklyLeadersService): AnonymousResourceCollection
+    public function weeklyLeaders(TournamentDayRequest $request, Tournament $tournament, WeeklyLeadersService $weeklyLeadersService): AnonymousResourceCollection
     {
-        $request->validate(['date' => 'date']);
-
-        $referenceDate = $request->has('date') ? Carbon::parse($request->get('date')) : now();
+        $id = $tournament->id;
+        $referenceDate = $request->getDate() ?? now();
         $dateStr = $referenceDate->toDateString();
 
         $cacheKey = TournamentCacheKeys::weeklyLeaders($id, $dateStr);

@@ -14,6 +14,14 @@ use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\Webhooks\AggregatorWebhookController;
 use Illuminate\Support\Facades\Route;
 
+// 18 цифр всегда помещаются в целое число PHP, а всё остальное контроллер принять не сможет и ответит ошибкой сервера.
+Route::patterns([
+    'id' => '[0-9]{1,18}',
+    'league' => '[0-9]{1,18}',
+    'tournament' => '[0-9]{1,18}',
+    'game' => '[0-9]{1,18}',
+]);
+
 Route::get('summary', [SummaryController::class, 'index']);
 
 Route::post('webhooks/aggregator/game-imported', [AggregatorWebhookController::class, 'gameImported'])
@@ -29,9 +37,17 @@ Route::resource('leagues.tournaments', LeagueTournamentsController::class)->only
 ]);
 
 Route::get('tournaments/summary', [TournamentsController::class, 'summary']);
-Route::get('tournaments/{id}/weekly-leaders', [TournamentsController::class, 'weeklyLeaders']);
-Route::get('tournaments/{id}/players-of-the-day', [TournamentsController::class, 'playersOfTheDay']);
-Route::get('tournaments/{id}/daily-insights', [TournamentsController::class, 'dailyInsights']);
+
+// Публичные расчёты, кешируемые по параметрам запроса: один счётчик на клиента, чтобы перебор значений не превращался в нагрузку на БД.
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('tournaments/{tournament}/weekly-leaders', [TournamentsController::class, 'weeklyLeaders']);
+    Route::get('tournaments/{tournament}/players-of-the-day', [TournamentsController::class, 'playersOfTheDay']);
+    Route::get('tournaments/{tournament}/daily-insights', [TournamentsController::class, 'dailyInsights']);
+    Route::resource('leaderboard', ImpRankingsController::class)->only([
+        'index'
+    ]);
+});
+
 Route::resource('tournaments', TournamentsController::class)->only([
     'index', 'show'
 ]);
@@ -62,7 +78,3 @@ Route::resource('imp', ImpController::class)->only([
 
 Route::post('imp/calculate-raw', [ImpController::class, 'calculateRaw'])
     ->middleware('static.token');
-
-Route::resource('leaderboard', ImpRankingsController::class)->only([
-    'index'
-]);

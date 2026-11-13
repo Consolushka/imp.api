@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\GameResource;
 use App\Http\Resources\PlayerKeyPerformanceResource;
+use App\Http\Requests\GameSearchRequest;
 use App\Http\Requests\GameShowRequest;
 use App\Http\Requests\GamesListRequest;
 use App\Models\Game;
 use App\Models\GameTeamPlayerStat;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
 use App\Dtos\PlayerNarrativeContext;
@@ -178,10 +178,10 @@ class GamesController extends Controller
         );
     }
 
-    public function search(Request $request)
+    public function search(GameSearchRequest $request)
     {
-        $text = $request->get('text');
-        $limit = $request->get('limit', 10);
+        $text = $request->getText();
+        $limit = $request->getLimit();
 
         if (empty($text)) {
             return GameResource::collection(collect([]));
@@ -190,10 +190,10 @@ class GamesController extends Controller
         $games = Game::query()
             ->with(['gameTeamStats', 'gameTeamStats.team'])
             ->where(function ($query) use ($text) {
-                $query->where('title', 'ilike', "%{$text}%")
+                $query->whereLike('title', "%{$text}%")
                     ->orWhereHas('gameTeamStats.team', function ($query) use ($text) {
-                        $query->where('name', 'ilike', "%{$text}%")
-                            ->orWhere('alias', 'ilike', "%{$text}%");
+                        $query->whereLike('name', "%{$text}%")
+                            ->orWhereLike('alias', "%{$text}%");
                     });
             })
             ->orderBy('scheduled_at', 'desc')

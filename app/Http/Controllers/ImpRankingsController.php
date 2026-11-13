@@ -5,24 +5,29 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ImpRankingRequest;
 use App\Http\Resources\RankedPlayerResource;
 use App\Service\Tournament\RankingService;
+use App\Service\Tournament\TournamentCacheKeys;
 use Illuminate\Support\Facades\Cache;
 
 class ImpRankingsController
 {
     public function index(ImpRankingRequest $request, RankingService $rankingService)
     {
-        // Страницы — срезы одного рейтинга: иначе каждая считала бы его заново, а позиции могли бы разъехаться.
         $filters = $request->rankingFilters();
-        $cacheKey = 'leaderboard_'.md5(json_encode($filters));
+        // После импорта игры прогрев меняет версию, и база, посчитанная до импорта, больше не читается.
+        $version = Cache::get(TournamentCacheKeys::leaderboardVersion($filters->tournamentId), 0);
+        $cacheKey = TournamentCacheKeys::leaderboardBase($filters->tournamentId, $filters->per, $filters->useReliability, $version);
 
-        $leaderboard = Cache::remember($cacheKey, now()->addDay(), function () use ($filters, $rankingService) {
-            return $rankingService->calculate($filters);
+        // Фильтры и страницы применяются в памяти к одной записи кеша: иначе каждое их сочетание считалось бы и хранилось отдельно.
+        $base = Cache::remember($cacheKey, now()->addDay(), function () use ($filters, $rankingService) {
+            return $rankingService->calculateBase($filters->tournamentId, $filters->per, $filters->useReliability);
         });
 
-        // Смещение не вычисляем: на огромном page оно не помещается в int и запрос падал бы с ошибкой.
-        $slicedLeaderboard = array_chunk($leaderboard, $request->getLimit())[$request->getPage() - 1] ?? [];
+        $ranked = $rankingService->selectRanked($base, $filters);
 
-        return RankedPlayerResource::collection($slicedLeaderboard)
-            ->additional(['meta' => ['total' => count($leaderboard)]]);
+        // Смещение не вычисляем: на огромном page оно не помещается в int и запрос падал бы с ошибкой.
+        $page = array_chunk($ranked, $request->getLimit())[$request->getPage() - 1] ?? [];
+
+        return RankedPlayerResource::collection($rankingService->hydrate($page))
+            ->additional(['meta' => ['total' => count($ranked)]]);
     }
 }
